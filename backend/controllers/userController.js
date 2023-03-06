@@ -125,6 +125,8 @@ const forgotPassword = async (req, res) => {
         const link = `http://localhost:5000/reset-password/${user._id}/${token}`;
 
         console.log(link);
+
+        res.json("Reset Password Link Sent");
     } catch (error) {
         console.log(error);
     }
