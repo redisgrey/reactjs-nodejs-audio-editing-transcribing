@@ -14,6 +14,8 @@ import Login from "./pages/Login";
 
 import Register from "./pages/Register";
 
+import ForgotPassword from "./pages/ForgotPassword";
+
 function App() {
     return (
         <>
@@ -25,6 +27,11 @@ function App() {
                     <Route path="/sign-up" element={<Register />} />
 
                     <Route path="/sign-in" element={<Login />} />
+
+                    <Route
+                        path="/forgot-password"
+                        element={<ForgotPassword />}
+                    />
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>

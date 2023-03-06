@@ -12,13 +12,12 @@ import Spinner from "../components/Spinner";
 
 import { LockClosedIcon } from "@heroicons/react/20/solid";
 
-function Login() {
-    const [loginForm, setLoginForm] = useState({
+function ForgotPassword() {
+    const [forgotPassword, setForgotPassword] = useState({
         emailAddress: "",
-        password: "",
     });
 
-    const { emailAddress, password } = loginForm;
+    const { emailAddress } = forgotPassword;
 
     const navigate = useNavigate();
 
@@ -34,14 +33,14 @@ function Login() {
         }
 
         if (isSuccess) {
-            navigate("/dashboard");
+            navigate("/reset");
         }
 
         dispatch(reset());
     }, [user, isError, isSuccess, message, navigate, dispatch]);
 
     const onChange = (e) => {
-        setLoginForm((prevState) => ({
+        setForgotPassword((prevState) => ({
             ...prevState,
             [e.target.name]: e.target.value,
         }));
@@ -52,7 +51,6 @@ function Login() {
 
         const userData = {
             emailAddress,
-            password,
         };
 
         dispatch(login(userData));
@@ -67,7 +65,7 @@ function Login() {
                 <div className="w-full max-w-md space-y-8">
                     <div>
                         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-                            Sign in to your account
+                            Enter your Email Address
                         </h2>
                     </div>
                     <form className="mt-8 space-y-6" onSubmit={onSubmit}>
@@ -90,42 +88,6 @@ function Login() {
                                     placeholder="Email address"
                                 />
                             </div>
-                            <div>
-                                <label htmlFor="password" className="sr-only ">
-                                    Password
-                                </label>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={onChange}
-                                    className="relative block w-full rounded-b-md border-0 py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    placeholder="Password"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center text-sm">
-                                Not yet Registered?
-                                <a
-                                    className="ms-1 font-medium text-[#2081C3] hover:text-[#2082c373]"
-                                    href="/sign-up"
-                                >
-                                    Sign Up
-                                </a>
-                            </div>
-
-                            <div className="text-sm">
-                                <a
-                                    href="/forgot-password"
-                                    className="font-medium text-[#2081C3] hover:text-[#2082c373]"
-                                >
-                                    Forgot your password?
-                                </a>
-                            </div>
                         </div>
 
                         <div>
@@ -139,7 +101,7 @@ function Login() {
                                         aria-hidden="true"
                                     />
                                 </span>
-                                Sign in
+                                Send Reset Password Link
                             </button>
                         </div>
                     </form>
@@ -149,4 +111,4 @@ function Login() {
     );
 }
 
-export default Login;
+export default ForgotPassword;
