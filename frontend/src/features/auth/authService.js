@@ -28,54 +28,9 @@ const login = async (userData) => {
     return response.data;
 };
 
-// Forgot Password
-const forgotPassword = async (userData) => {
-    const response = await axios.post(
-        "http://localhost:5000/api/users/forgot-password",
-        userData
-    );
-
-    if (response.data) {
-        localStorage.setItem("user", JSON.stringify(response.data));
-    }
-
-    return response.data;
-};
-
-// Reset Password
-const resetPassword = async (userData) => {
-    const response = await axios.get(
-        `http://localhost:5000/api/users/reset-password/:id`,
-        userData
-    );
-
-    if (response.data) {
-        localStorage.setItem("user", JSON.stringify(response.data));
-    }
-
-    return response.data;
-};
-
-// Update Password
-const updatePassword = async (userData) => {
-    const response = await axios.post(
-        `http://localhost:5000/api/users/reset-password/:id`,
-        userData
-    );
-
-    if (response.data) {
-        localStorage.setItem("user", JSON.stringify(response.data));
-    }
-
-    return response.data;
-};
-
 const authService = {
     register,
     login,
-    forgotPassword,
-    resetPassword,
-    updatePassword,
 };
 
 export default authService;

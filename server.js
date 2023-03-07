@@ -10,8 +10,6 @@ const dotenv = require("dotenv").config();
 
 const PORT = process.env.PORT || 5000;
 
-app.set("view engine", "ejs");
-
 // DATABASE CONNECTION
 mongoose.connect(process.env.MONGO_URI);
 

@@ -92,101 +92,6 @@ const loginUser = async (req, res) => {
     }
 };
 
-// @desc    Forgot Password
-// @route   POST /api/users/forgot-password
-// @access  Public
-// * email address
-const forgotPassword = async (req, res) => {
-    try {
-        const { emailAddress } = req.body;
-
-        if (!emailAddress) {
-            res.status(400);
-
-            throw new Error("Please add all fields");
-        }
-
-        const user = await User.findOne({ emailAddress: emailAddress });
-
-        if (!user) {
-            res.json("User does not exist!");
-        } else {
-            const link = `http://localhost:3000/reset-password/${user._id}`;
-
-            console.log(link);
-
-            res.json("Reset Password Link Sent");
-        }
-    } catch (error) {
-        console.log(error);
-    }
-};
-
-// @desc    Reset Password
-// @route   GET /api/users/reset-password/:id
-// @access  Private
-const resetPassword = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const user = await User.findOne({ _id: id });
-
-        if (!user) {
-            res.json("User does not exist!");
-        } else {
-            res.redirect("http://localhost:3000/");
-        }
-    } catch (error) {
-        console.log(error);
-        res.send("Not Verified");
-    }
-};
-
-// @desc    Update Password
-// @route   POST /api/users/reset-password/:id
-// @access  Private
-const updatePassword = async (req, res) => {
-    const { id } = req.params;
-    const { newPassword, confirmPassword } = req.body;
-    try {
-        if (newPassword !== confirmPassword) {
-            res.json("Passwords does not Match!");
-        }
-
-        //Check password pattern
-        let passwordFormat =
-            /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
-
-        if (newPassword.match(passwordFormat)) {
-            // Hash the password
-            const salt = await bcrypt.genSalt(10);
-
-            var hashedPassword = await bcrypt.hash(newPassword, salt);
-        } else {
-            res.json(
-                "Password should be between 8 to 15 characters which contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character"
-            );
-        }
-
-        const user = await User.findOne({ _id: id });
-
-        if (!user) {
-            res.json("User does not exist!");
-        } else {
-            const changePassword = await User.updateOne(
-                { _id: id },
-                { $set: { password: hashedPassword } }
-            );
-
-            if (changePassword) {
-                res.json("Password Updated");
-            }
-        }
-    } catch (error) {
-        console.log(error);
-    }
-};
-
 // Generate JWT
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
@@ -195,7 +100,4 @@ const generateToken = (id) => {
 module.exports = {
     registerUser,
     loginUser,
-    forgotPassword,
-    resetPassword,
-    updatePassword,
 };
