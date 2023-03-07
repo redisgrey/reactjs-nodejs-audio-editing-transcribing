@@ -6,18 +6,23 @@ import { useNavigate } from "react-router-dom";
 
 import { toast } from "react-toastify";
 
-import { forgotPassword, reset } from "../features/auth/authSlice";
+import {
+    resetPassword,
+    updatePassword,
+    reset,
+} from "../features/auth/authSlice";
 
 import Spinner from "../components/Spinner";
 
 import { LockClosedIcon } from "@heroicons/react/20/solid";
 
-function ForgotPassword() {
-    const [forgotPasswordForm, setForgotPasswordForm] = useState({
-        emailAddress: "",
+function ResetPassword() {
+    const [resetPasswordForm, setResetPasswordForm] = useState({
+        newPassword: "",
+        confirmPassword: "",
     });
 
-    const { emailAddress } = forgotPasswordForm;
+    const { newPassword, confirmPassword } = resetPasswordForm;
 
     const navigate = useNavigate();
 
@@ -33,7 +38,7 @@ function ForgotPassword() {
         }
 
         if (isSuccess) {
-            toast.success("Reset Password Email Sent!");
+            toast.success("Successfully Updated your Password!");
             navigate("/sign-in");
         }
 
@@ -41,7 +46,7 @@ function ForgotPassword() {
     }, [user, isError, isSuccess, message, navigate, dispatch]);
 
     const onChange = (e) => {
-        setForgotPasswordForm((prevState) => ({
+        setResetPasswordForm((prevState) => ({
             ...prevState,
             [e.target.name]: e.target.value,
         }));
@@ -51,10 +56,11 @@ function ForgotPassword() {
         e.preventDefault();
 
         const userData = {
-            emailAddress,
+            newPassword,
+            confirmPassword,
         };
 
-        dispatch(forgotPassword(userData));
+        dispatch(updatePassword(userData));
     };
 
     if (isLoading) {
@@ -66,27 +72,48 @@ function ForgotPassword() {
                 <div className="w-full max-w-md space-y-8">
                     <div>
                         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-                            Enter your Email Address
+                            Enter your New Password
                         </h2>
                     </div>
                     <form className="mt-8 space-y-6" onSubmit={onSubmit}>
                         <div className="-space-y-px rounded-md shadow-sm">
                             <div>
                                 <label
-                                    htmlFor="emailAddress"
+                                    htmlFor="newPassword"
                                     className="sr-only"
                                 >
-                                    Email address
+                                    Password
                                 </label>
                                 <input
-                                    id="emailAddress"
-                                    name="emailAddress"
-                                    type="email"
+                                    id="newPassword"
+                                    name="newPassword"
+                                    type="password"
                                     required
-                                    value={emailAddress}
+                                    value={newPassword}
                                     onChange={onChange}
                                     className="relative  block w-full rounded-t-md border-0 py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    placeholder="Email address"
+                                    placeholder="Password"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="-space-y-px rounded-md shadow-sm">
+                            <div>
+                                <label
+                                    htmlFor="confirmPassword"
+                                    className="sr-only"
+                                >
+                                    Confirm Password
+                                </label>
+                                <input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    required
+                                    value={confirmPassword}
+                                    onChange={onChange}
+                                    className="relative  block w-full rounded-t-md border-0 py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="Confirm Password"
                                 />
                             </div>
                         </div>
@@ -102,7 +129,7 @@ function ForgotPassword() {
                                         aria-hidden="true"
                                     />
                                 </span>
-                                Send Reset Password Link
+                                Update Password
                             </button>
                         </div>
                     </form>
@@ -112,4 +139,4 @@ function ForgotPassword() {
     );
 }
 
-export default ForgotPassword;
+export default ResetPassword;

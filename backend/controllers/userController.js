@@ -97,9 +97,9 @@ const loginUser = async (req, res) => {
 // @access  Public
 // * email address
 const forgotPassword = async (req, res) => {
-    const { emailAddress } = req.body;
-
     try {
+        const { emailAddress } = req.body;
+
         if (!emailAddress) {
             res.status(400);
 
@@ -122,7 +122,7 @@ const forgotPassword = async (req, res) => {
             }
         );
 
-        const link = `http://localhost:5000/reset-password/${user._id}/${token}`;
+        const link = `http://localhost:3000/reset-password/${user._id}/${token}`;
 
         console.log(link);
 
@@ -148,8 +148,6 @@ const resetPassword = async (req, res) => {
         const secret = process.env.JWT_SECRET + user.password;
 
         const verify = jwt.verify(token, secret);
-
-        res.send("Verified");
     } catch (error) {
         console.log(error);
         res.send("Not Verified");
@@ -161,9 +159,9 @@ const resetPassword = async (req, res) => {
 // @access  Private
 const updatePassword = async (req, res) => {
     const { id, token } = req.params;
-    const { password, confirmPassword } = req.body;
+    const { newPassword, confirmPassword } = req.body;
     try {
-        if (password !== confirmPassword) {
+        if (newPassword !== confirmPassword) {
             res.json("Passwords does not Match!");
         }
 
@@ -171,11 +169,11 @@ const updatePassword = async (req, res) => {
         let passwordFormat =
             /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
 
-        if (password.match(passwordFormat)) {
+        if (newPassword.match(passwordFormat)) {
             // Hash the password
             const salt = await bcrypt.genSalt(10);
 
-            var hashedPassword = await bcrypt.hash(password, salt);
+            var hashedPassword = await bcrypt.hash(newPassword, salt);
         } else {
             res.json(
                 "Password should be between 8 to 15 characters which contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character"
