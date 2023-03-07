@@ -117,15 +117,6 @@ function Login() {
                                     Sign Up
                                 </a>
                             </div>
-
-                            <div className="text-sm">
-                                <a
-                                    href="/forgot-password"
-                                    className="font-medium text-[#2081C3] hover:text-[#2082c373]"
-                                >
-                                    Forgot your password?
-                                </a>
-                            </div>
                         </div>
 
                         <div>
