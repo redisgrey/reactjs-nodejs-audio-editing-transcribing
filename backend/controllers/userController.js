@@ -110,44 +110,32 @@ const forgotPassword = async (req, res) => {
 
         if (!user) {
             res.json("User does not exist!");
+        } else {
+            const link = `http://localhost:3000/reset-password/${user._id}`;
+
+            console.log(link);
+
+            res.json("Reset Password Link Sent");
         }
-
-        const secret = process.env.JWT_SECRET + user.password;
-
-        const token = jwt.sign(
-            { email: user.emailAddress, id: user._id },
-            secret,
-            {
-                expiresIn: "5m",
-            }
-        );
-
-        const link = `http://localhost:3000/reset-password/${user._id}/${token}`;
-
-        console.log(link);
-
-        res.json("Reset Password Link Sent");
     } catch (error) {
         console.log(error);
     }
 };
 
 // @desc    Reset Password
-// @route   GET /api/users/reset-password/:id/:token
+// @route   GET /api/users/reset-password/:id
 // @access  Private
 const resetPassword = async (req, res) => {
-    const { id, token } = req.params;
-    console.log(req.params);
+    const { id } = req.params;
+
     try {
         const user = await User.findOne({ _id: id });
 
         if (!user) {
             res.json("User does not exist!");
+        } else {
+            res.redirect("http://localhost:3000/");
         }
-
-        const secret = process.env.JWT_SECRET + user.password;
-
-        const verify = jwt.verify(token, secret);
     } catch (error) {
         console.log(error);
         res.send("Not Verified");
@@ -155,10 +143,10 @@ const resetPassword = async (req, res) => {
 };
 
 // @desc    Update Password
-// @route   POST /api/users/reset-password/:id/:token
+// @route   POST /api/users/reset-password/:id
 // @access  Private
 const updatePassword = async (req, res) => {
-    const { id, token } = req.params;
+    const { id } = req.params;
     const { newPassword, confirmPassword } = req.body;
     try {
         if (newPassword !== confirmPassword) {
@@ -184,19 +172,15 @@ const updatePassword = async (req, res) => {
 
         if (!user) {
             res.json("User does not exist!");
-        }
+        } else {
+            const changePassword = await User.updateOne(
+                { _id: id },
+                { $set: { password: hashedPassword } }
+            );
 
-        const secret = process.env.JWT_SECRET + user.password;
-
-        const verify = jwt.verify(token, secret);
-
-        const changePassword = await User.updateOne(
-            { _id: id },
-            { $set: { password: hashedPassword } }
-        );
-
-        if (changePassword) {
-            res.json("Password Updated");
+            if (changePassword) {
+                res.json("Password Updated");
+            }
         }
     } catch (error) {
         console.log(error);

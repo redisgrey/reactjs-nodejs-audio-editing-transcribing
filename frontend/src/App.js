@@ -36,7 +36,7 @@ function App() {
                     />
 
                     <Route
-                        path="/reset-password/:id/:token"
+                        path="/reset-password/:id"
                         element={<ResetPassword />}
                     />
 

@@ -45,7 +45,7 @@ const forgotPassword = async (userData) => {
 // Reset Password
 const resetPassword = async (userData) => {
     const response = await axios.get(
-        `http://localhost:5000/api/users/reset-password/:id/:token`,
+        `http://localhost:5000/api/users/reset-password/:id`,
         userData
     );
 
@@ -59,7 +59,7 @@ const resetPassword = async (userData) => {
 // Update Password
 const updatePassword = async (userData) => {
     const response = await axios.post(
-        `http://localhost:5000/api/users/update-password`,
+        `http://localhost:5000/api/users/reset-password/:id`,
         userData
     );
 

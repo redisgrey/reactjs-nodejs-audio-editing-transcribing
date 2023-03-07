@@ -86,7 +86,7 @@ export const resetPassword = createAsyncThunk(
     }
 );
 
-// Reset Password
+// Update Password
 export const updatePassword = createAsyncThunk(
     "auth/update-password",
     async (user, thunkAPI) => {
