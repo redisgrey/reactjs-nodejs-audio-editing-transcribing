@@ -34,6 +34,7 @@ function Login() {
         }
 
         if (isSuccess) {
+            toast.success("Successfully signed in to your account!");
             navigate("/dashboard");
         }
 

@@ -35,6 +35,7 @@ function Register() {
         }
 
         if (isSuccess) {
+            toast.success("Successfully registered your account!");
             navigate("/dashboard");
         }
 
