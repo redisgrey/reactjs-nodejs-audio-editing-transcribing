@@ -2,62 +2,47 @@ import { useState } from "react";
 
 import { BsFillPlayFill, BsFillStopFill } from "react-icons/bs";
 
-const SpeechRecognition =
-    window.webkitSpeechRecognition || window.SpeechRecognition;
+import NotFound from "./NotFound";
 
-const recognition = new SpeechRecognition();
+import SpeechRecognition, {
+    useSpeechRecognition,
+} from "react-speech-recognition";
 
 function SpeechToText() {
-    recognition.continuous = true;
+    const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
+        useSpeechRecognition();
 
-    const [recording, setRecording] = useState(false);
+    const [isListening, setIsListening] = useState(false);
 
-    const [recognizing, setRecognizing] = useState(false);
+    if (!browserSupportsSpeechRecognition) {
+        return (
+            <NotFound
+                title={"Not Supported"}
+                body={"Browser doesn't support speech recognition."}
+                status="405"
+            />
+        );
+    }
 
-    const [transcription, setTranscription] = useState("");
-
-    const onChange = (e) => {
-        setTranscription((prevState) => ({
-            ...prevState,
-            [e.target.name]: e.target.value,
-        }));
+    const start = () => {
+        setIsListening(true);
+        SpeechRecognition.startListening({
+            continuous: true,
+        });
     };
-
+    const stop = () => {
+        setIsListening(false);
+        SpeechRecognition.stopListening();
+    };
     const reset = () => {
-        setRecognizing(false);
-    };
-
-    const startFunction = () => {
-        setRecording(true);
-        recognition.start();
-        setRecognizing(true);
-        console.log("starting recording");
-    };
-
-    const stopFunction = () => {
-        setRecording(false);
-        recognition.stop();
-        reset();
-        recognition.onspeechend = console.log("end");
-        console.log("stopping recording");
-    };
-
-    recognition.onresult = (event) => {
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-                setTranscription(`${event.results[i][0].transcript} `);
-                console.log(`${event.results[i][0].transcript}`);
-            }
-        }
-
-        console.log("result");
+        resetTranscript();
     };
 
     return (
         <>
             <div className="h-[100vh]">
                 <div className="container mt-48">
-                    <h1 className="text-center font-bold">
+                    <h1 className="text-center font-bold text-4xl mb-3">
                         Speech to Text in Javascript
                     </h1>
                     <div className="form-group">
@@ -65,17 +50,16 @@ function SpeechToText() {
                             id="textarea"
                             rows="6"
                             className="form-control"
-                            value={transcription}
-                            onChange={onChange}
+                            value={transcript}
                         ></textarea>
                     </div>
                     <div className="form-group w-50 m-auto d-flex justify-content-around text-center mt-3">
                         <button
                             id="recordBtn"
                             className="btn btn-danger w-50 me-4 flex justify-center items-center"
-                            onClick={recording ? stopFunction : startFunction}
+                            onClick={isListening ? stop : start}
                         >
-                            {recording ? (
+                            {isListening ? (
                                 <>
                                     <BsFillStopFill /> Stop Recording
                                 </>
@@ -88,7 +72,7 @@ function SpeechToText() {
                         <button
                             id="resetBtn"
                             className="btn btn-primary w-50"
-                            onClick={() => setTranscription("")}
+                            onClick={reset}
                         >
                             Reset
                         </button>
