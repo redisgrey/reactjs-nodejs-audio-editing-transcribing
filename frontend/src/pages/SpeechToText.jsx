@@ -1,11 +1,8 @@
 import { useState, useRef } from "react";
 
-import {
-    BsFillPlayFill,
-    BsFillStopFill,
-    BsFillTrashFill,
-    BsDownload,
-} from "react-icons/bs";
+import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
+
+import { RxReset } from "react-icons/rx";
 
 import NotFound from "./NotFound";
 
@@ -13,13 +10,14 @@ import SpeechRecognition, {
     useSpeechRecognition,
 } from "react-speech-recognition";
 
-// import { useReactMediaRecorder } from "react-media-recorder";
+// import Modal from "../components/Modal";
 
-import Modal from "../components/Modal";
+import Regular from "../components/Regular";
 
 const mimeType = "audio/webm";
 
 function SpeechToText() {
+    //* INITIALIZING THE SPEECHRECOGNITION API
     const {
         transcript,
         resetTranscript,
@@ -27,24 +25,23 @@ function SpeechToText() {
         isMicrophoneAvailable,
     } = useSpeechRecognition();
 
-    // const { startRecording, stopRecording, mediaBlobUrl, clearBlobUrl } =
-    //     useReactMediaRecorder({ audio: true });
-
     const [isListening, setIsListening] = useState(false);
 
     const [isRecording, setIsRecording] = useState(false);
 
-    const [modalOpen, setModalOpen] = useState(false);
+    // const [modalOpen, setModalOpen] = useState(false);
 
-    const [recordingTitle, setRecordingTitle] = useState("");
+    // const [recordingTitle, setRecordingTitle] = useState("");
 
-    const [errorMessage, setErrorMessage] = useState("");
+    // const [errorMessage, setErrorMessage] = useState("");
 
-    const [audioFileSRC, setAudioFileSRC] = useState(null);
-
+    //* INTIALIZING THE MEDIARECORDER API
     const mediaRecorder = useRef(null);
+
     const [stream, setStream] = useState(null);
+
     const [audioChunks, setAudioChunks] = useState([]);
+
     const [audioURL, setAudioURL] = useState(null);
 
     if (!browserSupportsSpeechRecognition) {
@@ -67,8 +64,9 @@ function SpeechToText() {
         );
     }
 
+    //* MICROPHONE ACCESS
     let constraints = {
-        audio: true,
+        audio: false,
         video: false,
     };
 
@@ -79,13 +77,13 @@ function SpeechToText() {
             );
             setStream(streamData);
         } catch (err) {
-            /* handle the error */
             console.log(err);
         }
     }
 
     getMedia(constraints);
 
+    //* TRANSCRIBING START BUTTON
     const start = () => {
         setIsListening(true);
         SpeechRecognition.startListening({
@@ -93,9 +91,9 @@ function SpeechToText() {
         });
     };
 
+    //* RECORDING START BUTTON
     const recordStart = () => {
         setIsRecording(true);
-        //startRecording();
 
         const media = new MediaRecorder(stream, { type: mimeType });
 
@@ -104,34 +102,39 @@ function SpeechToText() {
         mediaRecorder.current.start();
 
         let localAudioChunks = [];
+
         mediaRecorder.current.ondataavailable = (event) => {
             if (typeof event.data === "undefined") return;
+
             if (event.data.size === 0) return;
+
             localAudioChunks.push(event.data);
         };
+
         setAudioChunks(localAudioChunks);
 
         console.log("recording start");
     };
 
-    const audioList = [];
-
+    //* TRANSCRIBING STOP BUTTON
     const stop = () => {
         setIsListening(false);
         SpeechRecognition.stopListening();
     };
 
+    //*  RECORDING STOP BUTTON
     const recordStop = () => {
         setIsRecording(false);
-        //stopRecording();
+
         mediaRecorder.current.stop();
 
         mediaRecorder.current.onstop = () => {
-            //creates a blob file from the audiochunks data
             const audioBlob = new Blob(audioChunks, { type: mimeType });
-            //creates a playable URL from the blob file.
+
             const audioUrl = URL.createObjectURL(audioBlob);
+
             setAudioURL(audioUrl);
+
             setAudioChunks([]);
         };
 
@@ -139,24 +142,9 @@ function SpeechToText() {
         //setModalOpen(true);
     };
 
-    // if (audioURL) {
-    //     audioList.push(audioURL);
-    //     setAudioURL(null);
-    //     console.log(audioList);
-    // }
-
+    // *TRANSCRIPT RESET BUTTON
     const reset = () => {
         resetTranscript();
-    };
-
-    // const deleteAudio = () => {
-    //     clearBlobUrl();
-    // };
-
-    const onChange = (e) => {
-        let audioFile = e.target.files;
-        const audioBlob = new Blob(audioFile, { type: mimeType });
-        setAudioFileSRC(URL.createObjectURL(audioBlob));
     };
 
     return (
@@ -166,59 +154,60 @@ function SpeechToText() {
                     <h1 className="text-center font-bold text-4xl mb-3">
                         Speech to Text in Javascript
                     </h1>
-                    <div className="form-group">
-                        <textarea
-                            id="textarea"
-                            rows="6"
-                            className="form-control"
-                            value={transcript}
-                            readOnly
-                        ></textarea>
-                    </div>
+
                     <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
                         <button
                             id="recordBtn"
-                            className="btn btn-danger w-50 me-4 flex justify-center items-center"
+                            className="btn btn-danger w-50 me-4 space-x-2 flex justify-center items-center"
                             onClick={isRecording ? recordStop : recordStart}
                         >
                             {isRecording ? (
                                 <>
-                                    <BsFillStopFill /> Stop Recording
+                                    <BsFillStopFill />{" "}
+                                    <span>Stop Recording</span>
                                 </>
                             ) : (
                                 <>
-                                    <BsFillPlayFill /> Start Recording
+                                    <BsFillPlayFill />{" "}
+                                    <span>Start Recording</span>
                                 </>
                             )}
                         </button>
+
+                        <Regular />
+
                         <button
                             id="transcribeBtn"
-                            className="btn btn-success w-50 me-4 flex justify-center items-center"
+                            className="btn btn-success w-50 me-4 space-x-2 flex justify-center items-center"
                             onClick={isListening ? stop : start}
                         >
                             {isListening ? (
                                 <>
-                                    <BsFillStopFill /> Stop Transcribing
+                                    <BsFillStopFill />{" "}
+                                    <span>Stop Transcribing</span>
                                 </>
                             ) : (
                                 <>
-                                    <BsFillPlayFill /> Start Transcribing
+                                    <BsFillPlayFill />{" "}
+                                    <span>Start Transcribing</span>
                                 </>
                             )}
                         </button>
                         <button
                             id="resetBtn"
-                            className="btn btn-primary w-50"
+                            className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
                             onClick={reset}
                         >
-                            Reset
+                            <RxReset /> <span>Reset Transcript</span>
                         </button>
                     </div>
+                    {/** AUDIO RECORDED PREVIEW */}
                     <div className="container space-y-5 mt-5">
-                        <h1 className="text-2xl font-bold">Audio Preview</h1>
+                        <h1 className="text-2xl font-bold">
+                            Recorded Audio Preview
+                        </h1>
 
                         <div className="flex items-center justify-between">
-                            <span>{recordingTitle}</span>
                             <audio
                                 src={audioURL}
                                 controls
@@ -234,31 +223,19 @@ function SpeechToText() {
                         </div>
                     </div>
 
-                    <div className="container space-y-5 mt-5">
-                        <h1 className="text-2xl font-bold">Audio Lists</h1>
-                        <label className="mr-3" htmlFor="myAudio">
-                            Upload Audio:
-                        </label>
-                        <input
-                            type="file"
-                            onChange={onChange}
-                            id="myAudio"
-                            name="myAudio"
-                        />
-
-                        <div className="flex items-center justify-between">
-                            <audio
-                                id="audioFile"
-                                src={audioFileSRC}
-                                autoPlay
-                                controls
-                            ></audio>
-                        </div>
+                    <div className="form-group mt-5">
+                        <textarea
+                            id="textarea"
+                            rows="6"
+                            className="form-control"
+                            value={transcript}
+                            readOnly
+                        ></textarea>
                     </div>
                 </div>
             </div>
 
-            <Modal
+            {/* <Modal
                 open={modalOpen}
                 setOpen={setModalOpen}
                 title={"Recording Title:"}
@@ -289,7 +266,7 @@ function SpeechToText() {
                     </>
                 }
                 errorMessage={errorMessage}
-            />
+            /> */}
         </>
     );
 }
