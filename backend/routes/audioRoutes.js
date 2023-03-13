@@ -107,14 +107,40 @@ router.post("/upload", uploadMiddleware, async (req, res) => {
     return res.send(file.id);
 });
 
-// router.get("/:id", ({ params: { id } }, res) => {
-//     if (!id || id === "undefined") return res.status(400).send("No Audio ID");
-//     const _id = new mongoose.Types.ObjectId(id);
-//     gfs.find({ _id }).toArray((err, files) => {
-//         if (!files || files.length === 0)
-//             return res.status(400).send("No Files Exist");
-//         gfs.openDownloadStream(_id).pipe(res);
-//     });
-// });
+router.get("/", async (req, res) => {
+    (gfs = new mongoose.mongo.GridFSBucket(conn.db)),
+        {
+            bucketName: "audios",
+        };
+
+    // const { files } = req;
+    // let file = await gfs.find({ files }).toArray();
+
+    // if (!file || file.length === 0) {
+    //     return res.status(404).send("No Files Exist");
+    // }
+
+    // return res.json(file);
+
+    // const { files } = req;
+
+    // gfs.find({ files }).toArray((err, files) => {
+    //     if (!files || files.length === 0) {
+    //         return res.status(400).send("No Files Exist");
+    //     }
+    //     console.log(res);
+    // });
+
+    const { files } = req;
+    gfs.find({ files }).toArray((err, files) => {
+        if (!files || files.length === 0) {
+            return res.status(400).send("No Files Exist");
+        }
+        gfs.openDownloadStream(_id).pipe(res);
+        //GridFSBucket.openDownloadStreamByName()
+
+        //return res.json(files);
+    });
+});
 
 module.exports = router;

@@ -1,4 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+import axios from "axios";
+
+import { useDispatch } from "react-redux";
 
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
@@ -12,7 +16,7 @@ import SpeechRecognition, {
 
 // import Modal from "../components/Modal";
 
-import Regular from "../components/Regular";
+import Uploader from "../components/Uploader";
 
 const mimeType = "audio/webm";
 
@@ -43,6 +47,48 @@ function SpeechToText() {
     const [audioChunks, setAudioChunks] = useState([]);
 
     const [audioURL, setAudioURL] = useState(null);
+
+    // * FETCH AUDIO DATA FROM THE DATABASE
+    const [audioList, setAudioList] = useState([]);
+
+    const [audioListURL, setAudioListURL] = useState(null);
+
+    const dispatch = useDispatch();
+
+    // useEffect(() => {
+    //     if (isError) {
+    //         toast.error(message);
+    //     }
+
+    //     axios
+    //         .get("http://localhost:5000/api/audio")
+    //         .then(({ data }) => {
+    //             setAudioListURL(data);
+    //             // setFile(null);
+    //             // setInputContainsFile(false);
+    //             // setCurrentlyUploading(false);
+    //             // toast.success("Successfully uploaded your audio file");
+    //         })
+    //         .catch((err) => {
+    //             if (err.response.status === 400) {
+    //                 const errMsg = err.response.data;
+    //                 if (errMsg) {
+    //                     console.log(errMsg);
+    //                     alert(errMsg);
+    //                 } else {
+    //                     console.log("other error", err);
+    //                     // setInputContainsFile(false);
+    //                     // setCurrentlyUploading(false);
+    //                 }
+    //             }
+    //         });
+    // }, []);
+
+    const audioListExample = [
+        "sfsfsdsdgsdgsdgdgsa",
+        "awrewwfsfjiasjfakjsf",
+        "sdfskjfnsdnawfn",
+    ];
 
     if (!browserSupportsSpeechRecognition) {
         return (
@@ -174,7 +220,7 @@ function SpeechToText() {
                             )}
                         </button>
 
-                        <Regular />
+                        <Uploader />
 
                         <button
                             id="transcribeBtn"
@@ -231,6 +277,30 @@ function SpeechToText() {
                             value={transcript}
                             readOnly
                         ></textarea>
+                    </div>
+
+                    <div className="container space-y-5 mt-5">
+                        <h1 className="text-2xl font-bold">Audio List</h1>
+
+                        <div>
+                            {audioListExample.map((audio) => (
+                                <audio src={audio} controls></audio>
+                            ))}
+                        </div>
+                        {/* <div className="flex items-center justify-between">
+                            <audio
+                                src={audioURL}
+                                controls
+                                className="w-[80%]"
+                            ></audio>
+                            <a
+                                className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                href={audioURL}
+                                download
+                            >
+                                <BsDownload /> <span>Download</span>
+                            </a>
+                        </div> */}
                     </div>
                 </div>
             </div>

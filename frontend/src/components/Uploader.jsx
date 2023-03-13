@@ -4,9 +4,9 @@ import axios from "axios";
 
 import { BsDownload } from "react-icons/bs";
 
-import Spinner from "./Spinner";
+import { toast } from "react-toastify";
 
-const Regular = () => {
+const Uploader = () => {
     const [file, setFile] = useState(null);
 
     const [inputContainsFile, setInputContainsFile] = useState(false);
@@ -14,8 +14,6 @@ const Regular = () => {
     const [currentlyUploading, setCurrentlyUploading] = useState(false);
 
     const [audioId, setAudioId] = useState(null);
-
-    const [progress, setProgress] = useState(null);
 
     const onChange = (event) => {
         setFile(event.target.files[0]);
@@ -34,6 +32,7 @@ const Regular = () => {
                 setFile(null);
                 setInputContainsFile(false);
                 setCurrentlyUploading(false);
+                toast.success("Successfully uploaded your audio file");
             })
             .catch((err) => {
                 if (err.response.status === 400) {
@@ -51,11 +50,9 @@ const Regular = () => {
     };
 
     const onLabelClick = () => {
-        if (file) {
+        if (inputContainsFile) {
             setCurrentlyUploading(true);
             fileUploadHandler();
-        } else {
-            console.log("upload successful");
         }
     };
 
@@ -111,4 +108,4 @@ const Regular = () => {
     );
 };
 
-export default Regular;
+export default Uploader;
