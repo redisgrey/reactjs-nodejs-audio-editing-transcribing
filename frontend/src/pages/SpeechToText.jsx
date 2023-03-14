@@ -1,9 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 
-import axios from "axios";
-
-import { useDispatch } from "react-redux";
-
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
 import { RxReset } from "react-icons/rx";
@@ -53,42 +49,11 @@ function SpeechToText() {
 
     const [audioListURL, setAudioListURL] = useState(null);
 
-    const dispatch = useDispatch();
-
-    // useEffect(() => {
-    //     if (isError) {
-    //         toast.error(message);
-    //     }
-
-    //     axios
-    //         .get("http://localhost:5000/api/audio")
-    //         .then(({ data }) => {
-    //             setAudioListURL(data);
-    //             // setFile(null);
-    //             // setInputContainsFile(false);
-    //             // setCurrentlyUploading(false);
-    //             // toast.success("Successfully uploaded your audio file");
-    //         })
-    //         .catch((err) => {
-    //             if (err.response.status === 400) {
-    //                 const errMsg = err.response.data;
-    //                 if (errMsg) {
-    //                     console.log(errMsg);
-    //                     alert(errMsg);
-    //                 } else {
-    //                     console.log("other error", err);
-    //                     // setInputContainsFile(false);
-    //                     // setCurrentlyUploading(false);
-    //                 }
-    //             }
-    //         });
-    // }, []);
-
-    const audioListExample = [
-        "sfsfsdsdgsdgsdgdgsa",
-        "awrewwfsfjiasjfakjsf",
-        "sdfskjfnsdnawfn",
-    ];
+    // const audioListExample = [
+    //     "sfsfsdsdgsdgsdgdgsa",
+    //     "awrewwfsfjiasjfakjsf",
+    //     "sdfskjfnsdnawfn",
+    // ];
 
     if (!browserSupportsSpeechRecognition) {
         return (
@@ -282,11 +247,11 @@ function SpeechToText() {
                     <div className="container space-y-5 mt-5">
                         <h1 className="text-2xl font-bold">Audio List</h1>
 
-                        <div>
+                        {/* <div>
                             {audioListExample.map((audio) => (
                                 <audio src={audio} controls></audio>
                             ))}
-                        </div>
+                        </div> */}
                         {/* <div className="flex items-center justify-between">
                             <audio
                                 src={audioURL}
