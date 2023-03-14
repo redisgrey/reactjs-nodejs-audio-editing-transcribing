@@ -107,39 +107,34 @@ router.post("/upload", uploadMiddleware, async (req, res) => {
     return res.send(file.id);
 });
 
-router.get("/", async (req, res) => {
+router.get("/:id", ({ params: { id } }, res) => {
+    try {
+        var _id = new mongoose.Types.ObjectId(id);
+    } catch (err) {
+        return res.status(400).json({
+            message:
+                "Invalid trackID in URL parameter. Must be a single String of 12 bytes or a string of 24 hex characters",
+        });
+    }
+    res.set("content-type", "audio/webm");
+    res.set("accept-ranges", "bytes");
+
     (gfs = new mongoose.mongo.GridFSBucket(conn.db)),
         {
             bucketName: "audios",
         };
+    let downloadStream = gfs.openDownloadStream(_id);
 
-    // const { files } = req;
-    // let file = await gfs.find({ files }).toArray();
+    downloadStream.on("data", (chunk) => {
+        res.write(chunk);
+    });
 
-    // if (!file || file.length === 0) {
-    //     return res.status(404).send("No Files Exist");
-    // }
+    downloadStream.on("error", () => {
+        res.sendStatus(404);
+    });
 
-    // return res.json(file);
-
-    // const { files } = req;
-
-    // gfs.find({ files }).toArray((err, files) => {
-    //     if (!files || files.length === 0) {
-    //         return res.status(400).send("No Files Exist");
-    //     }
-    //     console.log(res);
-    // });
-
-    const { files } = req;
-    gfs.find({ files }).toArray((err, files) => {
-        if (!files || files.length === 0) {
-            return res.status(400).send("No Files Exist");
-        }
-        gfs.openDownloadStream(_id).pipe(res);
-        //GridFSBucket.openDownloadStreamByName()
-
-        //return res.json(files);
+    downloadStream.on("end", () => {
+        res.end();
     });
 });
 
