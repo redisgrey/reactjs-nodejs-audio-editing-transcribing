@@ -77,7 +77,7 @@ function SpeechToText() {
 
     //* MICROPHONE ACCESS
     let constraints = {
-        audio: true,
+        audio: false,
         video: false,
     };
 

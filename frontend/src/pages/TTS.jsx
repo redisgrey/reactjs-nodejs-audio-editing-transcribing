@@ -2,23 +2,12 @@ import React, { useState } from "react";
 
 import { RxReset } from "react-icons/rx";
 
-import { useSpeechSynthesis } from "react-speech-kit";
+import { BsDownload } from "react-icons/bs";
 
-function TTS() {
+import { TextToSpeech } from "tts-react";
+
+function TTS2() {
     const [value, setValue] = useState("");
-
-    const [voiceIndex, setVoiceIndex] = useState(null);
-
-    const { speak, voices, cancel } = useSpeechSynthesis();
-
-    const voice = voices[voiceIndex] || null;
-
-    // *TRANSCRIPT RESET BUTTON
-    const reset = () => {
-        setValue("");
-        setVoiceIndex(null);
-        cancel();
-    };
     return (
         <>
             <div className="h-[100vh] font-[Poppins]">
@@ -36,49 +25,54 @@ function TTS() {
                         ></textarea>
                     </div>
 
-                    <div className="form-group mt-5">
-                        <select
-                            id="voice-select"
-                            className="form-control form-control-lg"
-                            value={voiceIndex || ""}
-                            onChange={(e) => {
-                                setVoiceIndex(e.target.value);
-                            }}
-                        >
-                            <option value="">Default</option>
-                            {voices.map((option, index) => (
-                                <option key={option.voiceURI} value={index}>
-                                    {`${option.lang} - ${option.name}`}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
                     <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
-                        <button
-                            id="listenBtn"
-                            className="btn btn-danger w-50 me-4 space-x-2 flex justify-center items-center"
-                            onClick={() =>
-                                speak({
-                                    text: value,
-                                    voice,
-                                })
-                            }
-                        >
-                            Listen
-                        </button>
-
                         <button
                             id="resetBtn"
                             className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
-                            onClick={reset}
+                            onClick={() => setValue("")}
                         >
                             <RxReset /> <span>Reset Transcript</span>
                         </button>
+                        <a
+                            className="flex items-center w-50 justify-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                            //href={audioURL}
+                            download
+                        >
+                            <BsDownload /> <span>Download Transcript</span>
+                        </a>
                     </div>
+                </div>
+                <div className="mt-10 container">
+                    <h1 className="font-bold text-3xl text-center">
+                        Check your transcript here.
+                    </h1>
+                    <TextToSpeech
+                        align="horizontal"
+                        allowMuting
+                        markBackgroundColor="#55AD66"
+                        markColor="white"
+                        markTextAsSpoken
+                        onBoundary={function noRefCheck() {}}
+                        onEnd={function noRefCheck() {}}
+                        onError={function noRefCheck() {}}
+                        onPause={function noRefCheck() {}}
+                        onPitchChange={function noRefCheck() {}}
+                        onRateChange={function noRefCheck() {}}
+                        onStart={function noRefCheck() {}}
+                        onVolumeChange={function noRefCheck() {}}
+                        position="topCenter"
+                        rate={1}
+                        size="large"
+                        volume={1}
+                    >
+                        <div>
+                            <p>{value}</p>
+                        </div>
+                    </TextToSpeech>
                 </div>
             </div>
         </>
     );
 }
 
-export default TTS;
+export default TTS2;
