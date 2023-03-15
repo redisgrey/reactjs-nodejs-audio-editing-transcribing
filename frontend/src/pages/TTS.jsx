@@ -4,12 +4,12 @@ import { RxReset } from "react-icons/rx";
 
 import { useSpeechSynthesis } from "react-speech-kit";
 
-function TextToSpeech() {
+function TTS() {
     const [value, setValue] = useState("");
 
     const [voiceIndex, setVoiceIndex] = useState(null);
 
-    const { speak, voices } = useSpeechSynthesis();
+    const { speak, voices, cancel } = useSpeechSynthesis();
 
     const voice = voices[voiceIndex] || null;
 
@@ -17,6 +17,7 @@ function TextToSpeech() {
     const reset = () => {
         setValue("");
         setVoiceIndex(null);
+        cancel();
     };
     return (
         <>
@@ -80,4 +81,4 @@ function TextToSpeech() {
     );
 }
 
-export default TextToSpeech;
+export default TTS;
