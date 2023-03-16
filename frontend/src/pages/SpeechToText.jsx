@@ -10,8 +10,6 @@ import SpeechRecognition, {
     useSpeechRecognition,
 } from "react-speech-recognition";
 
-// import Modal from "../components/Modal";
-
 import Uploader from "../components/Uploader";
 
 const mimeType = "audio/webm";
@@ -29,12 +27,6 @@ function SpeechToText() {
 
     const [isRecording, setIsRecording] = useState(false);
 
-    // const [modalOpen, setModalOpen] = useState(false);
-
-    // const [recordingTitle, setRecordingTitle] = useState("");
-
-    // const [errorMessage, setErrorMessage] = useState("");
-
     //* INTIALIZING THE MEDIARECORDER API
     const mediaRecorder = useRef(null);
 
@@ -48,12 +40,6 @@ function SpeechToText() {
     const [audioList, setAudioList] = useState([]);
 
     const [audioListURL, setAudioListURL] = useState(null);
-
-    // const audioListExample = [
-    //     "sfsfsdsdgsdgsdgdgsa",
-    //     "awrewwfsfjiasjfakjsf",
-    //     "sdfskjfnsdnawfn",
-    // ];
 
     if (!browserSupportsSpeechRecognition) {
         return (
@@ -269,39 +255,6 @@ function SpeechToText() {
                     </div>
                 </div>
             </div>
-
-            {/* <Modal
-                open={modalOpen}
-                setOpen={setModalOpen}
-                title={"Recording Title:"}
-                body={
-                    <>
-                        <div className="mt-2">
-                            <input
-                                type="text"
-                                id="recordingTitle"
-                                value={recordingTitle}
-                                onChange={(e) =>
-                                    setRecordingTitle(e.target.value)
-                                }
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            />
-                        </div>
-                    </>
-                }
-                footer={
-                    <>
-                        <button
-                            type="button"
-                            className="bg-red-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
-                            onClick={() => setModalOpen(false)}
-                        >
-                            Set Recording Title
-                        </button>
-                    </>
-                }
-                errorMessage={errorMessage}
-            /> */}
         </>
     );
 }
