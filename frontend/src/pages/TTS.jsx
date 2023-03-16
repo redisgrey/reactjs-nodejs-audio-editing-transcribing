@@ -8,6 +8,18 @@ import { TextToSpeech } from "tts-react";
 
 function TTS2() {
     const [value, setValue] = useState("");
+
+    const [textURL, setTextURL] = useState(null);
+
+    const setValueDownload = (e) => {
+        setValue(e.target.value);
+
+        const textBlob = new Blob([e.target.value], { type: "text/plain" });
+
+        const textDownloadURL = URL.createObjectURL(textBlob);
+
+        setTextURL(textDownloadURL);
+    };
     return (
         <>
             <div className="h-[100vh] font-[Poppins]">
@@ -21,7 +33,7 @@ function TTS2() {
                             rows="6"
                             className="form-control"
                             value={value}
-                            onChange={(e) => setValue(e.target.value)}
+                            onChange={setValueDownload}
                         ></textarea>
                     </div>
 
@@ -35,7 +47,7 @@ function TTS2() {
                         </button>
                         <a
                             className="flex items-center w-50 justify-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                            //href={audioURL}
+                            href={textURL}
                             download
                         >
                             <BsDownload /> <span>Download Transcript</span>
