@@ -6,7 +6,7 @@ import { BsDownload } from "react-icons/bs";
 
 import { TextToSpeech } from "tts-react";
 
-function TTS2() {
+function TTS() {
     const [value, setValue] = useState("");
 
     const [textURL, setTextURL] = useState(null);
@@ -87,4 +87,4 @@ function TTS2() {
     );
 }
 
-export default TTS2;
+export default TTS;
