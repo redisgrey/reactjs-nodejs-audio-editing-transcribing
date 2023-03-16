@@ -61,7 +61,7 @@ function TTS() {
                     <TextToSpeech
                         align="horizontal"
                         allowMuting
-                        markBackgroundColor="#55AD66"
+                        markBackgroundColor="#E09F3E"
                         markColor="white"
                         markTextAsSpoken
                         onBoundary={function noRefCheck() {}}

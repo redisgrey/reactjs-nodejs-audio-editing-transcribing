@@ -1,6 +1,6 @@
 const express = require("express");
 
-const mongoose = require("mongoose");
+const { MongoClient } = require("mongodb");
 
 const app = express();
 
@@ -11,13 +11,11 @@ const dotenv = require("dotenv").config();
 const PORT = process.env.PORT || 5000;
 
 // DATABASE CONNECTION
-mongoose.connect(process.env.MONGO_URI);
+const client = new MongoClient(process.env.MONGO_URI);
 
-const db = mongoose.connection;
-
-db.on("error", console.error.bind(console, "connection error:"));
-
-db.once("open", () => console.log("Connected to the database"));
+if (client) {
+    console.log("Connected to the database");
+}
 
 // * MIDDLEWARE
 app.use(cors());
