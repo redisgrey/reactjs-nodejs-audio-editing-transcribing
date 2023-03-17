@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "react-bootstrap";
 import { Howler, Howl } from "howler";
 
@@ -7,6 +7,7 @@ function AudioEditor() {
     const [start, setStart] = useState(0);
     const [end, setEnd] = useState(0);
     const [playing, setPlaying] = useState(false);
+    const [trimmedSrc, setTrimmedSrc] = useState("");
 
     const handleFileInputChange = (event) => {
         const file = event.target.files[0];
@@ -48,15 +49,69 @@ function AudioEditor() {
         setPlaying(false);
     };
 
-    const handleStartInputChange = (event) => {
-        const value = Number(event.target.value);
-        setStart(value);
+    const handleRangeChange = (event) => {
+        const { name, value } = event.target;
+        if (name === "start") {
+            setStart(value);
+            if (value >= end) {
+                setEnd(value);
+            }
+        } else if (name === "end") {
+            setEnd(value);
+            if (value <= start) {
+                setStart(value);
+            }
+        }
     };
 
-    const handleEndInputChange = (event) => {
-        const value = Number(event.target.value);
-        setEnd(value);
+    const handleTrimButtonClick = () => {
+        const sound = new Howl({
+            src: [URL.createObjectURL(file)],
+            format: ["mp3", "wav", "ogg"],
+            html5: true,
+            sprite: {
+                slice: [start * 1000, (end - start) * 1000],
+            },
+            onload: () => {
+                // Create a new blob URL for the trimmed audio
+                const trimmedBlob = new Blob([sound._src], { type: file.type });
+                console.log(trimmedBlob.type);
+                const trimmedUrl = URL.createObjectURL(trimmedBlob);
+                console.log(trimmedUrl);
+
+                setTrimmedSrc(trimmedUrl);
+                setStart(0);
+                setEnd(100);
+            },
+        });
+        sound.load();
     };
+
+    useEffect(() => {
+        if (file && trimmedSrc) {
+            setPlaying(false);
+            const sound = new Howl({
+                src: [trimmedSrc],
+                format: ["mp3", "wav", "ogg"],
+                html5: true,
+            });
+
+            sound.play();
+
+            return () => {
+                sound.unload();
+            };
+        }
+        console.log("trimmedSrc updated:", trimmedSrc);
+    }, [file, trimmedSrc]);
+
+    // const handleAudioError = (event) => {
+    //     console.log("Audio error:", event.target.error);
+    // };
+
+    // const handleAudioEvent = (event) => {
+    //     console.log("Audio event:", event.type);
+    // };
 
     return (
         <div className="mt-56">
@@ -68,18 +123,21 @@ function AudioEditor() {
             <br />
             <input
                 type="range"
+                name="start"
                 min="0"
                 max="100"
                 value={start}
-                onChange={handleStartInputChange}
+                onChange={handleRangeChange}
+                className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
             />
-            <br />
             <input
                 type="range"
+                name="end"
                 min="0"
                 max="100"
                 value={end}
-                onChange={handleEndInputChange}
+                onChange={handleRangeChange}
+                className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
             />
             <br />
             <Button onClick={handlePlayButtonClick} disabled={!file}>
@@ -88,6 +146,27 @@ function AudioEditor() {
             <Button onClick={handleStopButtonClick} disabled={!playing}>
                 Stop
             </Button>
+            <Button onClick={handleTrimButtonClick} disabled={!file}>
+                Trim
+            </Button>
+            {/* {trimmedSrc && (
+                <audio
+                    key={trimmedSrc}
+                    src={trimmedSrc}
+                    onError={handleAudioError}
+                    onPlay={handleAudioEvent}
+                    onPause={handleAudioEvent}
+                    controls
+                ></audio>
+            )} */}
+            {trimmedSrc && (
+                <audio
+                    key={trimmedSrc}
+                    src={trimmedSrc}
+                    controls
+                    preload="auto"
+                />
+            )}
         </div>
     );
 }
