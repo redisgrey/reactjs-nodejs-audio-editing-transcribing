@@ -8,6 +8,7 @@ function AudioEditor() {
     const [end, setEnd] = useState(0);
     const [playing, setPlaying] = useState(false);
     const [trimmedSrc, setTrimmedSrc] = useState("");
+    const [howlLoaded, setHowlLoaded] = useState(false);
 
     const handleFileInputChange = (event) => {
         const file = event.target.files[0];
@@ -69,6 +70,7 @@ function AudioEditor() {
             src: [URL.createObjectURL(file)],
             format: ["mp3", "wav", "ogg"],
             html5: true,
+            preload: "auto",
             sprite: {
                 slice: [start * 1000, (end - start) * 1000],
             },
@@ -82,13 +84,15 @@ function AudioEditor() {
                 setTrimmedSrc(trimmedUrl);
                 setStart(0);
                 setEnd(100);
+                setHowlLoaded(true);
             },
         });
         sound.load();
+        console.log("handleTrimButtonClick executed");
     };
 
     useEffect(() => {
-        if (file && trimmedSrc) {
+        if (file && trimmedSrc && howlLoaded) {
             setPlaying(false);
             const sound = new Howl({
                 src: [trimmedSrc],
@@ -103,7 +107,7 @@ function AudioEditor() {
             };
         }
         console.log("trimmedSrc updated:", trimmedSrc);
-    }, [file, trimmedSrc]);
+    }, [file, trimmedSrc, playing, setTrimmedSrc]);
 
     // const handleAudioError = (event) => {
     //     console.log("Audio error:", event.target.error);
@@ -159,14 +163,7 @@ function AudioEditor() {
                     controls
                 ></audio>
             )} */}
-            {trimmedSrc && (
-                <audio
-                    key={trimmedSrc}
-                    src={trimmedSrc}
-                    controls
-                    preload="auto"
-                />
-            )}
+            {trimmedSrc && <audio key={trimmedSrc} src={trimmedSrc} controls />}
         </div>
     );
 }

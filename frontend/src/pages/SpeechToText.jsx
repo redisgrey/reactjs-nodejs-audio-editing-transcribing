@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
+import { Howl } from "howler";
+
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
 import { RxReset } from "react-icons/rx";
@@ -12,7 +14,9 @@ import SpeechRecognition, {
 
 import Uploader from "../components/Uploader";
 
-const mimeType = "audio/webm";
+const lamejs = require("lamejstmp");
+
+const mimeType = "audio/mpeg";
 
 function SpeechToText() {
     //* INITIALIZING THE SPEECHRECOGNITION API
@@ -36,10 +40,25 @@ function SpeechToText() {
 
     const [audioURL, setAudioURL] = useState(null);
 
+    // * TRIM FUNCTION
+    const [startTrim, setStartTrim] = useState(0);
+
+    const [endTrim, setEndTrim] = useState(100);
+
+    const [trimmedUrl, setTrimmedUrl] = useState("");
+
     // * FETCH AUDIO DATA FROM THE DATABASE
     const [audioList, setAudioList] = useState([]);
 
     const [audioListURL, setAudioListURL] = useState(null);
+
+    useEffect(() => {
+        console.log("audioUrl updated:", audioURL);
+    }, [audioURL]);
+
+    useEffect(() => {
+        console.log("trimmedUrl updated:", trimmedUrl);
+    }, [trimmedUrl]);
 
     if (!browserSupportsSpeechRecognition) {
         return (
@@ -63,7 +82,7 @@ function SpeechToText() {
 
     //* MICROPHONE ACCESS
     let constraints = {
-        audio: false,
+        audio: true,
         video: false,
     };
 
@@ -132,11 +151,121 @@ function SpeechToText() {
 
             setAudioURL(audioUrl);
 
-            setAudioChunks([]);
+            console.log(audioChunks);
+            // setAudioChunks([]);
         };
 
         console.log("recording stop");
         //setModalOpen(true);
+    };
+
+    const handleTrimButtonClick = async () => {
+        console.log(audioChunks);
+
+        const audioBlob = new Blob(audioChunks, { type: mimeType });
+
+        const audioContext = new AudioContext();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audioBuffer = await audioContext.decodeAudioData(
+            await fetch(audioUrl).then((response) => response.arrayBuffer())
+        );
+
+        console.log(audioBuffer);
+
+        const originalDuration = audioBuffer.duration;
+
+        let start = startTrim;
+
+        console.log("start Trim: ", start);
+
+        let end = endTrim;
+
+        console.log("end Trim: ", end);
+
+        if (start < 0) {
+            start = 0;
+        }
+
+        if (end > originalDuration) {
+            end = originalDuration;
+        }
+
+        const sampleRate = audioBuffer.sampleRate;
+        const numChannels = audioBuffer.numberOfChannels;
+        const startFrame = start * sampleRate;
+        const endFrame = end * sampleRate;
+        const numberOfFrames = endFrame - startFrame;
+        const trimmedBuffer = audioContext.createBuffer(
+            audioBuffer.numberOfChannels,
+            numberOfFrames,
+            sampleRate
+        );
+
+        console.log("numberOfFrames: ", numberOfFrames);
+
+        console.log("trimmedBuffer: ", trimmedBuffer);
+
+        for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+            const channelData = audioBuffer.getChannelData(i);
+            const trimmedChannelData = new Float32Array(numberOfFrames);
+            for (let j = 0; j < numberOfFrames; j++) {
+                const index = startFrame + j;
+                if (index < channelData.length) {
+                    trimmedChannelData[j] = channelData[index];
+                } else {
+                    // handle case where index is out of bounds
+                    trimmedChannelData[j] = channelData[channelData.length - 1];
+                }
+            }
+            trimmedBuffer.copyToChannel(trimmedChannelData, i, 0);
+        }
+
+        // Get the audio data as an array of float32 values
+        const audioData = new Float32Array(trimmedBuffer.getChannelData(0));
+
+        console.log("audioData: ", audioData);
+
+        // Create a new LAME encoder instance
+        const lame = new lamejs.Mp3Encoder(numChannels, sampleRate, 320);
+
+        console.log("lame: ", lame);
+
+        const samples = new Int16Array(sampleRate);
+
+        const mp3Tmp = lame.encodeBuffer(audioData);
+
+        // Create a buffer to hold the MP3 data
+        const mp3Data = [];
+
+        // Encode the audio data into MP3 format
+        mp3Data.push(mp3Tmp);
+        console.log("mp3Data: ", mp3Data);
+
+        const finalChunk = lame.flush();
+        if (finalChunk.length > 0) {
+            mp3Data.push(new Int8Array(finalChunk));
+        }
+
+        console.log("finalChunk: ", finalChunk);
+
+        // Convert the array of Int8Arrays to a single Uint8Array
+        const finalData = new Uint8Array(
+            mp3Data.reduce((acc, curr) => [...acc, ...curr], [])
+        );
+
+        console.log("finalData: ", finalData);
+
+        // Create a Blob from the MP3 data
+        const blob = new Blob([finalData], { type: "audio/mp3" });
+
+        console.log("blob: ", blob);
+
+        // Create a URL for the Blob
+        const url = URL.createObjectURL(blob);
+
+        console.log("url: ", url);
+
+        setTrimmedUrl(url);
     };
 
     // *TRANSCRIPT RESET BUTTON
@@ -216,6 +345,52 @@ function SpeechToText() {
                                 download
                             >
                                 <BsDownload /> <span>Download</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div className="w-[100%] mx-auto mt-5 space-y-3">
+                        <label htmlFor="startTrim">Set Start of Trim:</label>
+                        <input
+                            type="range"
+                            name="start"
+                            id="startTrim"
+                            min="0"
+                            max="100"
+                            value={startTrim}
+                            onChange={(e) => setStartTrim(e.target.value)}
+                            className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
+                        />
+                        <label htmlFor="endTrim">Set End of Trim:</label>
+                        <input
+                            type="range"
+                            name="end"
+                            id="endTrim"
+                            min="0"
+                            max="100"
+                            value={endTrim}
+                            onChange={(e) => setEndTrim(e.target.value)}
+                            className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
+                        />
+                        <audio
+                            src={trimmedUrl}
+                            controls
+                            className="w-[80%]"
+                        ></audio>
+                        <div className="flex justify-center">
+                            <button
+                                id="trimBtn"
+                                className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                onClick={handleTrimButtonClick}
+                            >
+                                <RxReset /> <span>Trim Audio</span>
+                            </button>
+                            <a
+                                className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                href={trimmedUrl}
+                                download
+                            >
+                                <BsDownload />{" "}
+                                <span>Download Trimmed Audio</span>
                             </a>
                         </div>
                     </div>
