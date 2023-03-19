@@ -49,6 +49,10 @@ function SpeechToText() {
 
     const [trimmedAudioList, setTrimmedAudioList] = useState([]);
 
+    const [selectedAudios, setSelectedAudios] = useState([]);
+
+    const [mergedAudioUrl, setMergedAudioUrl] = useState(null);
+
     useEffect(() => {
         const savedTrimmedAudioList = localStorage.getItem("trimmedAudioList");
         if (savedTrimmedAudioList) {
@@ -290,6 +294,120 @@ function SpeechToText() {
         console.log(trimmedAudioList);
     };
 
+    const fetchAudio = (urls) => {
+        const context = new AudioContext();
+        return Promise.all(
+            urls.map(async (url) => {
+                return await fetch(url)
+                    .then((response) => response.blob())
+                    .then((blob) => context.decodeAudioData(blob))
+                    .catch((error) => console.error(error));
+            })
+        );
+    };
+    const handleCheckboxChange = (e, index) => {
+        const checked = e.target.checked;
+
+        console.log("checked: ", checked);
+
+        const newSelectedAudios = [...selectedAudios];
+        if (checked) {
+            newSelectedAudios.push(trimmedAudioList[index]);
+        } else {
+            const selectedIndex = newSelectedAudios.findIndex(
+                (audio) => audio.url === trimmedAudioList[index].url
+            );
+            if (selectedIndex !== -1) {
+                newSelectedAudios.splice(selectedIndex, 1);
+            }
+        }
+        setSelectedAudios(newSelectedAudios);
+
+        console.log("selectedAudios: ", selectedAudios);
+    };
+
+    const trimmedAudioListWithChecked = trimmedAudioList.map(
+        (audio, index) => ({
+            ...audio,
+            checked: selectedAudios.some(
+                (selectedAudio) => selectedAudio.url === audio.url
+            ),
+        })
+    );
+
+    const mergeAudio = async (urls) => {
+        const context = new AudioContext();
+        const audioBuffers = await Promise.all(urls.map(fetchAudio));
+        const totalLength = audioBuffers.reduce(
+            (acc, buffer) => acc + buffer.length,
+            0
+        );
+        const mergedBuffer = context.createBuffer(
+            audioBuffers[0].numberOfChannels,
+            totalLength,
+            audioBuffers[0].sampleRate
+        );
+        let offset = 0;
+        audioBuffers.forEach((buffer) => {
+            for (
+                let channel = 0;
+                channel < buffer.numberOfChannels;
+                channel++
+            ) {
+                mergedBuffer.copyToChannel(
+                    buffer.getChannelData(channel),
+                    channel,
+                    offset
+                );
+            }
+            offset += buffer.length;
+        });
+        const mergedBlob = bufferToWave(mergedBuffer);
+        const mergedBlobUrl = URL.createObjectURL(mergedBlob);
+
+        setMergedAudioUrl(mergedBlobUrl);
+        // Do something with the merged audio, e.g. download it
+    };
+
+    const handleMerge = async () => {
+        if (selectedAudios.length > 1) {
+            try {
+                const blobs = selectedAudios.map((audio) => audio.url);
+
+                console.log("blobs: ", blobs);
+
+                const urls = Object.values(blobs).map((blob) =>
+                    URL.createObjectURL(blob)
+                );
+
+                console.log("urls: ", urls);
+
+                const audioBuffers = await Promise.all(blobs.map(fetchAudio));
+
+                console.log("audioBuffers: ", audioBuffers);
+
+                const mergedAudioBuffer = mergeAudio(audioBuffers);
+
+                console.log("mergedAudioBuffer: ", mergedAudioBuffer);
+
+                const mergedAudioBlob = bufferToWave(mergedAudioBuffer);
+
+                console.log("mergedAudioBlob: ", mergedAudioBlob);
+
+                const mergedAudioBlobUrl = URL.createObjectURL(mergedAudioBlob);
+
+                console.log("mergedAudioBlobUrl: ", mergedAudioBlobUrl);
+
+                setMergedAudioUrl(mergedAudioBlobUrl);
+
+                console.log("mergedAudioUrl: ", mergedAudioUrl);
+            } catch (error) {
+                console.error(error);
+            }
+        } else {
+            console.log("Select at least 2 audios to merge.");
+        }
+    };
     // * DOWNLOAD THE TRIMMED AUDIO FUNCTION
     const handleDownload = () => {
         if (audioBufferSource) {
@@ -518,20 +636,34 @@ function SpeechToText() {
 
                     <div className="container space-y-5 mt-5">
                         <h1 className="text-2xl font-bold">Audio List</h1>
-                        <ul>
-                            {trimmedAudioList.map((trimmedAudio, index) => (
-                                <li key={index}>
-                                    <span>{trimmedAudio.name}</span>
-                                    <audio
-                                        src={trimmedAudio.url}
-                                        controls
-                                    ></audio>
-                                    <button onClick={() => handleDelete(index)}>
-                                        Delete
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+
+                        {trimmedAudioListWithChecked.map((audio, index) => (
+                            <div key={index}>
+                                <input
+                                    type="checkbox"
+                                    checked={audio.checked}
+                                    onChange={(e) =>
+                                        handleCheckboxChange(e, index)
+                                    }
+                                />
+                                <label>{audio.name}</label>
+                                <audio src={audio.url} controls></audio>
+                                <button
+                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                    onClick={handleDelete}
+                                >
+                                    <BsDownload /> <span>Delete </span>
+                                </button>
+                            </div>
+                        ))}
+
+                        <button
+                            className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                            onClick={handleMerge}
+                        >
+                            <BsDownload /> <span>Merge Audios</span>
+                        </button>
+                        <audio src={mergedAudioUrl} controls></audio>
                     </div>
                 </div>
             </div>
