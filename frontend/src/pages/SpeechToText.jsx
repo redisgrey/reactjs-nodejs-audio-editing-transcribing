@@ -1,9 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 
-import { Howl } from "howler";
-
-import { WaveFile } from "wavefile";
-
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
 import { RxReset } from "react-icons/rx";
@@ -15,8 +11,6 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 
 import Uploader from "../components/Uploader";
-
-const lamejs = require("lamejstmp");
 
 const mimeType = "audio/mpeg";
 
@@ -53,15 +47,14 @@ function SpeechToText() {
 
     const [isPlaying, setIsPlaying] = useState(false);
 
-    // * FETCH AUDIO DATA FROM THE DATABASE
-    const [audioList, setAudioList] = useState([]);
+    const [trimmedAudioList, setTrimmedAudioList] = useState([]);
 
-    const [audioListURL, setAudioListURL] = useState(null);
-
-    // useEffect(() => {
-    //     const max = duration ? (endTrim / 100) * duration : 100;
-    //     setMaxEndTrim(max);
-    // }, [endTrim, duration]);
+    useEffect(() => {
+        const savedTrimmedAudioList = localStorage.getItem("trimmedAudioList");
+        if (savedTrimmedAudioList) {
+            setTrimmedAudioList(JSON.parse(savedTrimmedAudioList));
+        }
+    }, []);
 
     if (!browserSupportsSpeechRecognition) {
         return (
@@ -155,13 +148,12 @@ function SpeechToText() {
             setAudioURL(audioUrl);
 
             console.log(audioChunks);
-            // setAudioChunks([]);
         };
 
         console.log("recording stop");
-        //setModalOpen(true);
     };
 
+    // * TRIMMING AUDIO FUNCTION
     const loadAudioBuffer = async (audioBuffer) => {
         const audioContext = new AudioContext();
         const audioBufferSource = audioContext.createBufferSource();
@@ -239,6 +231,7 @@ function SpeechToText() {
         await loadAudioBuffer(trimmedBuffer);
     };
 
+    // * PLAY THE TRIMMED AUDIO FUNCTION
     const handlePlay = () => {
         if (audioBufferSource) {
             const audioContext = new AudioContext();
@@ -251,11 +244,53 @@ function SpeechToText() {
 
             newAudioBufferSource.onended = () => {
                 setIsPlaying(false);
-                setAudioBufferSource(null);
             };
         }
     };
 
+    const handleSave = () => {
+        if (audioBufferSource) {
+            const audioContext = new AudioContext();
+            const newAudioBufferSource = audioContext.createBufferSource();
+            newAudioBufferSource.buffer = audioBufferSource.buffer;
+
+            const audioBlob = bufferToWave(newAudioBufferSource.buffer);
+            const audioBlobUrl = URL.createObjectURL(audioBlob);
+
+            const dataURL = audioBlobUrl;
+
+            console.log("dataURL: ", dataURL);
+
+            const trimmedAudio = {
+                name: "myTrimmedAudio.mp3", // replace with actual file name
+                url: dataURL,
+            };
+
+            console.log("trimmedAudio: ", trimmedAudio);
+
+            const newTrimmedAudioList = [...trimmedAudioList, trimmedAudio];
+
+            console.log("newTrimmedAudioList: ", newTrimmedAudioList);
+
+            setTrimmedAudioList(newTrimmedAudioList);
+            localStorage.setItem(
+                "trimmedAudioList",
+                JSON.stringify(newTrimmedAudioList)
+            );
+
+            console.log("trimmedAudioList: ", trimmedAudioList);
+        }
+    };
+
+    const handleDelete = (index) => {
+        const newList = [...trimmedAudioList];
+        newList.splice(index, 1);
+        setTrimmedAudioList(newList);
+        localStorage.setItem("trimmedAudioList", JSON.stringify(newList));
+        console.log(trimmedAudioList);
+    };
+
+    // * DOWNLOAD THE TRIMMED AUDIO FUNCTION
     const handleDownload = () => {
         if (audioBufferSource) {
             const audioContext = new AudioContext();
@@ -462,6 +497,12 @@ function SpeechToText() {
                                     ? "Playing Audio..."
                                     : "Play Trimmed Audio"}
                             </button>
+                            <button
+                                className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                onClick={handleSave}
+                            >
+                                <BsDownload /> <span>Save Trimmed Audio</span>
+                            </button>
                         </div>
                     </div>
 
@@ -477,26 +518,20 @@ function SpeechToText() {
 
                     <div className="container space-y-5 mt-5">
                         <h1 className="text-2xl font-bold">Audio List</h1>
-
-                        {/* <div>
-                            {audioListExample.map((audio) => (
-                                <audio src={audio} controls></audio>
+                        <ul>
+                            {trimmedAudioList.map((trimmedAudio, index) => (
+                                <li key={index}>
+                                    <span>{trimmedAudio.name}</span>
+                                    <audio
+                                        src={trimmedAudio.url}
+                                        controls
+                                    ></audio>
+                                    <button onClick={() => handleDelete(index)}>
+                                        Delete
+                                    </button>
+                                </li>
                             ))}
-                        </div> */}
-                        {/* <div className="flex items-center justify-between">
-                            <audio
-                                src={audioURL}
-                                controls
-                                className="w-[80%]"
-                            ></audio>
-                            <a
-                                className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                href={audioURL}
-                                download
-                            >
-                                <BsDownload /> <span>Download</span>
-                            </a>
-                        </div> */}
+                        </ul>
                     </div>
                 </div>
             </div>
