@@ -10,8 +10,6 @@ import SpeechRecognition, {
     useSpeechRecognition,
 } from "react-speech-recognition";
 
-// import Uploader from "../components/Uploader";
-
 const mimeType = "audio/mpeg";
 
 function SpeechToText() {

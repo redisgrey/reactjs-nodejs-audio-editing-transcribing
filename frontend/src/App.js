@@ -18,8 +18,6 @@ import SpeechToText from "./pages/SpeechToText";
 
 import TTS from "./pages/TTS";
 
-import AudioEditor from "./pages/AudioEditor";
-
 function App() {
     return (
         <>
@@ -35,8 +33,6 @@ function App() {
                     <Route path="/speech-to-text" element={<SpeechToText />} />
 
                     <Route path="/text-to-speech" element={<TTS />} />
-
-                    <Route path="/audio-editor" element={<AudioEditor />} />
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>
