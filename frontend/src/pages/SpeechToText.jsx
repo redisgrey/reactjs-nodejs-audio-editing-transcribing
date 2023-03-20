@@ -295,13 +295,29 @@ function SpeechToText() {
     };
 
     const fetchAudio = (urls) => {
+        console.log("fetchAudio urls: ", urls);
         const context = new AudioContext();
         return Promise.all(
-            urls.map(async (url) => {
-                return await fetch(url)
-                    .then((response) => response.blob())
-                    .then((blob) => context.decodeAudioData(blob))
+            urls.map(async (url, index) => {
+                console.log(`Fetching audio file ${index + 1}: ${url}`);
+                return await fetch(url, {
+                    responseType: "arraybuffer",
+                })
+                    .then((response) => response.arrayBuffer())
+                    .then((buffer) => {
+                        console.log(`Decoding audio file ${index + 1}: ${url}`);
+                        return context.decodeAudioData(buffer);
+                    })
                     .catch((error) => console.error(error));
+            })
+        );
+    };
+
+    const fetchAudioBuffer = (buffers) => {
+        const context = new AudioContext();
+        return Promise.all(
+            buffers.map((buffer) => {
+                return context.decodeAudioData(buffer);
             })
         );
     };
@@ -335,18 +351,22 @@ function SpeechToText() {
         })
     );
 
-    const mergeAudio = async (urls) => {
+    const mergeAudio = async (audioBuffers) => {
+        console.log("mergeAudio audioBuffers: ", audioBuffers);
         const context = new AudioContext();
-        const audioBuffers = await Promise.all(urls.map(fetchAudio));
+
         const totalLength = audioBuffers.reduce(
             (acc, buffer) => acc + buffer.length,
             0
         );
+        console.log("mergeAudio totalLength: ", totalLength);
         const mergedBuffer = context.createBuffer(
             audioBuffers[0].numberOfChannels,
             totalLength,
             audioBuffers[0].sampleRate
         );
+
+        console.log("mergeAudio mergedBuffer: ", mergedBuffer);
         let offset = 0;
         audioBuffers.forEach((buffer) => {
             for (
@@ -362,27 +382,25 @@ function SpeechToText() {
             }
             offset += buffer.length;
         });
+
         const mergedBlob = bufferToWave(mergedBuffer);
+        console.log("mergeAudio mergedBlob: ", mergedBlob);
         const mergedBlobUrl = URL.createObjectURL(mergedBlob);
+        console.log("mergeAudio mergedBlobUrl: ", mergedBlobUrl);
 
         setMergedAudioUrl(mergedBlobUrl);
         // Do something with the merged audio, e.g. download it
     };
 
     const handleMerge = async () => {
+        console.log("selectedAudios: ", selectedAudios);
         if (selectedAudios.length > 1) {
             try {
-                const blobs = selectedAudios.map((audio) => audio.url);
-
-                console.log("blobs: ", blobs);
-
-                const urls = Object.values(blobs).map((blob) =>
-                    URL.createObjectURL(blob)
-                );
+                const urls = selectedAudios.map((audio) => audio.url);
 
                 console.log("urls: ", urls);
 
-                const audioBuffers = await Promise.all(blobs.map(fetchAudio));
+                const audioBuffers = await fetchAudio(urls);
 
                 console.log("audioBuffers: ", audioBuffers);
 
