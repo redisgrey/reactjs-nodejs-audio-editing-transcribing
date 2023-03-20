@@ -122,6 +122,12 @@ function SpeechToText() {
     const recordStart = () => {
         setIsRecording(true);
 
+        setIsListening(true);
+
+        SpeechRecognition.startListening({
+            continuous: true,
+        });
+
         const media = new MediaRecorder(stream, { type: mimeType });
 
         mediaRecorder.current = media;
@@ -152,6 +158,10 @@ function SpeechToText() {
     //*  RECORDING STOP BUTTON
     const recordStop = () => {
         setIsRecording(false);
+
+        setIsListening(false);
+
+        SpeechRecognition.stopListening();
 
         mediaRecorder.current.stop();
 
@@ -329,6 +339,7 @@ function SpeechToText() {
         console.log(trimmedAudioList);
     };
 
+    // * UNDO AND REDO FUNCTION
     const handleUndo = () => {
         setRedoStack([...redoStack, trimmedAudioList]);
         setTrimmedAudioList(undoStack.pop());
@@ -565,6 +576,15 @@ function SpeechToText() {
         reader.readAsArrayBuffer(file);
     };
 
+    const downloadTranscript = () => {
+        const element = document.createElement("a");
+        const file = new Blob([transcript], { type: "text/plain" });
+        element.href = URL.createObjectURL(file);
+        element.download = "transcript.txt";
+        document.body.appendChild(element); // Required for this to work in FireFox
+        element.click();
+    };
+
     return (
         <>
             <div className="h-[100vh] font-[Poppins]">
@@ -633,7 +653,23 @@ function SpeechToText() {
                         </button>
                     </div>
 
-                    {/** AUDIO RECORDED PREVIEW */}
+                    <div className="form-group mt-5">
+                        <textarea
+                            id="textarea"
+                            rows="6"
+                            className="form-control"
+                            value={transcript}
+                            readOnly
+                        ></textarea>
+                        <button
+                            className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                            onClick={downloadTranscript}
+                        >
+                            Download Transcript
+                        </button>
+                    </div>
+
+                    {/** IMPORTED AUDIO PREVIEW */}
                     <div className="container space-y-5 mt-5">
                         <div className="flex items-center">
                             <h1 className="text-2xl font-bold">
@@ -650,74 +686,6 @@ function SpeechToText() {
                                 <audio src={audio.url} controls />
                             </div>
                         ))}
-                        <div className="w-[100%] mx-auto mt-5 space-y-3">
-                            <label htmlFor="startTrim">
-                                Set Start of Trim:
-                            </label>
-                            <span> {startTrim} seconds</span>
-                            <input
-                                type="range"
-                                name="start"
-                                id="startTrim"
-                                min="0"
-                                max="100"
-                                value={startTrim}
-                                onChange={(e) => setStartTrim(e.target.value)}
-                                className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
-                            />
-                            <label htmlFor="endTrim">Set End of Trim:</label>
-                            <span> {endTrim} seconds</span>
-                            <input
-                                type="range"
-                                name="end"
-                                id="endTrim"
-                                min="0"
-                                max={
-                                    audioBufferSource
-                                        ? audioBufferSource.duration
-                                        : 100
-                                }
-                                value={endTrim}
-                                onChange={(e) => setEndTrim(e.target.value)}
-                                className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
-                            />
-
-                            <div className="flex justify-center">
-                                <button
-                                    id="trimBtn"
-                                    className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
-                                    onClick={handleTrimButtonClick}
-                                >
-                                    <RxReset /> <span>Trim Audio</span>
-                                </button>
-                                <button
-                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                    onClick={handleDownload}
-                                >
-                                    <BsDownload />{" "}
-                                    <span>Download Trimmed Audio</span>
-                                </button>
-                            </div>
-
-                            <div className="flex justify-center">
-                                <button
-                                    className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
-                                    onClick={handlePlay}
-                                    disabled={isPlaying}
-                                >
-                                    {isPlaying
-                                        ? "Playing Audio..."
-                                        : "Play Trimmed Audio"}
-                                </button>
-                                <button
-                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                    onClick={handleSave}
-                                >
-                                    <BsDownload />{" "}
-                                    <span>Save Trimmed Audio</span>
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                     {/** AUDIO RECORDED PREVIEW */}
@@ -810,16 +778,6 @@ function SpeechToText() {
                                 <BsDownload /> <span>Save Trimmed Audio</span>
                             </button>
                         </div>
-                    </div>
-
-                    <div className="form-group mt-5">
-                        <textarea
-                            id="textarea"
-                            rows="6"
-                            className="form-control"
-                            value={transcript}
-                            readOnly
-                        ></textarea>
                     </div>
 
                     <div className="container space-y-5 mt-5">
