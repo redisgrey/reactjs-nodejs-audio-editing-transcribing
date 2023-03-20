@@ -23,6 +23,7 @@ function SpeechToText() {
         isMicrophoneAvailable,
     } = useSpeechRecognition();
 
+    //* STATES FOR THE SPEECHRECOGNITION API
     const [isListening, setIsListening] = useState(false);
 
     const [isRecording, setIsRecording] = useState(false);
@@ -30,13 +31,14 @@ function SpeechToText() {
     //* INTIALIZING THE MEDIARECORDER API
     const mediaRecorder = useRef(null);
 
+    //* STATES FOR THE MEDIARECORDER API
     const [stream, setStream] = useState(null);
 
     const [audioChunks, setAudioChunks] = useState([]);
 
     const [audioURL, setAudioURL] = useState(null);
 
-    // * TRIM FUNCTION
+    // * STATES FOR THE TRIM FUNCTION
     const [originalAudioDuration, setOriginalAudioDuration] = useState(0);
 
     const [startTrim, setStartTrim] = useState(0);
@@ -49,10 +51,15 @@ function SpeechToText() {
 
     const [trimmedAudioList, setTrimmedAudioList] = useState([]);
 
+    const [undoStack, setUndoStack] = useState([]);
+    const [redoStack, setRedoStack] = useState([]);
+
+    // * STATES FOR THE MERGE FUNCTION
     const [selectedAudios, setSelectedAudios] = useState([]);
 
     const [mergedAudioUrl, setMergedAudioUrl] = useState(null);
 
+    // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
         const savedTrimmedAudioList = localStorage.getItem("trimmedAudioList");
         if (savedTrimmedAudioList) {
@@ -172,7 +179,9 @@ function SpeechToText() {
         const audioBlob = new Blob(audioChunks, { type: mimeType });
 
         const audioContext = new AudioContext();
+
         const audioUrl = URL.createObjectURL(audioBlob);
+
         const audioBuffer = await audioContext.decodeAudioData(
             await fetch(audioUrl).then((response) => response.arrayBuffer())
         );
@@ -202,10 +211,15 @@ function SpeechToText() {
         console.log("end Trim: ", end);
 
         const sampleRate = audioBuffer.sampleRate;
+
         const numChannels = audioBuffer.numberOfChannels;
+
         const startFrame = start * sampleRate;
+
         const endFrame = end * sampleRate;
+
         const numberOfFrames = endFrame - startFrame;
+
         const trimmedBuffer = audioContext.createBuffer(
             numChannels,
             numberOfFrames,
@@ -224,14 +238,12 @@ function SpeechToText() {
                 if (index < channelData.length) {
                     trimmedChannelData[j] = channelData[index];
                 } else {
-                    // handle case where index is out of bounds
                     trimmedChannelData[j] = channelData[channelData.length - 1];
                 }
             }
             trimmedBuffer.copyToChannel(trimmedChannelData, i, 0);
         }
 
-        // Call the function to load the trimmed audio into the player
         await loadAudioBuffer(trimmedBuffer);
     };
 
@@ -252,13 +264,17 @@ function SpeechToText() {
         }
     };
 
+    // * SAVE THE TRIMMED AUDIO FUNCTION
     const handleSave = () => {
         if (audioBufferSource) {
             const audioContext = new AudioContext();
+
             const newAudioBufferSource = audioContext.createBufferSource();
+
             newAudioBufferSource.buffer = audioBufferSource.buffer;
 
             const audioBlob = bufferToWave(newAudioBufferSource.buffer);
+
             const audioBlobUrl = URL.createObjectURL(audioBlob);
 
             const dataURL = audioBlobUrl;
@@ -276,7 +292,10 @@ function SpeechToText() {
 
             console.log("newTrimmedAudioList: ", newTrimmedAudioList);
 
-            setTrimmedAudioList(newTrimmedAudioList);
+            setTrimmedAudioList((prevState) => {
+                setUndoStack([...undoStack, prevState]);
+                return newTrimmedAudioList;
+            });
             localStorage.setItem(
                 "trimmedAudioList",
                 JSON.stringify(newTrimmedAudioList)
@@ -286,20 +305,46 @@ function SpeechToText() {
         }
     };
 
+    // * DELETE THE TRIMMED AUDIO FUNCTION IN THE LIST
     const handleDelete = (index) => {
         const newList = [...trimmedAudioList];
+
         newList.splice(index, 1);
-        setTrimmedAudioList(newList);
+
+        setTrimmedAudioList((prevState) => {
+            setUndoStack([...undoStack, prevState]);
+            const newList = [...prevState];
+            newList.splice(index, 1);
+            return newList;
+        });
+
         localStorage.setItem("trimmedAudioList", JSON.stringify(newList));
+
         console.log(trimmedAudioList);
     };
 
+    const handleUndo = () => {
+        setRedoStack([...redoStack, trimmedAudioList]);
+        setTrimmedAudioList(undoStack.pop());
+        setUndoStack([...undoStack]);
+    };
+
+    const handleRedo = () => {
+        setUndoStack([...undoStack, trimmedAudioList]);
+        setTrimmedAudioList(redoStack.pop());
+        setRedoStack([...redoStack]);
+    };
+
+    // * MERGE FUNCTION
     const fetchAudio = (urls) => {
         console.log("fetchAudio urls: ", urls);
+
         const context = new AudioContext();
+
         return Promise.all(
             urls.map(async (url, index) => {
                 console.log(`Fetching audio file ${index + 1}: ${url}`);
+
                 return await fetch(url, {
                     responseType: "arraybuffer",
                 })
@@ -313,14 +358,6 @@ function SpeechToText() {
         );
     };
 
-    const fetchAudioBuffer = (buffers) => {
-        const context = new AudioContext();
-        return Promise.all(
-            buffers.map((buffer) => {
-                return context.decodeAudioData(buffer);
-            })
-        );
-    };
     const handleCheckboxChange = (e, index) => {
         const checked = e.target.checked;
 
@@ -389,7 +426,6 @@ function SpeechToText() {
         console.log("mergeAudio mergedBlobUrl: ", mergedBlobUrl);
 
         setMergedAudioUrl(mergedBlobUrl);
-        // Do something with the merged audio, e.g. download it
     };
 
     const handleMerge = async () => {
@@ -654,6 +690,19 @@ function SpeechToText() {
 
                     <div className="container space-y-5 mt-5">
                         <h1 className="text-2xl font-bold">Audio List</h1>
+
+                        <button
+                            className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                            onClick={handleUndo}
+                        >
+                            Undo
+                        </button>
+                        <button
+                            className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                            onClick={handleRedo}
+                        >
+                            Redo
+                        </button>
 
                         {trimmedAudioListWithChecked.map((audio, index) => (
                             <div key={index}>
