@@ -10,7 +10,7 @@ import SpeechRecognition, {
     useSpeechRecognition,
 } from "react-speech-recognition";
 
-import Uploader from "../components/Uploader";
+// import Uploader from "../components/Uploader";
 
 const mimeType = "audio/mpeg";
 
@@ -43,7 +43,7 @@ function SpeechToText() {
 
     const [startTrim, setStartTrim] = useState(0);
 
-    const [endTrim, setEndTrim] = useState(100);
+    const [endTrim, setEndTrim] = useState(0);
 
     const [audioBufferSource, setAudioBufferSource] = useState(null);
 
@@ -51,13 +51,19 @@ function SpeechToText() {
 
     const [trimmedAudioList, setTrimmedAudioList] = useState([]);
 
+    // * STATES FOR THE UNDO/REDO FUNCTION
     const [undoStack, setUndoStack] = useState([]);
+
     const [redoStack, setRedoStack] = useState([]);
 
     // * STATES FOR THE MERGE FUNCTION
     const [selectedAudios, setSelectedAudios] = useState([]);
 
     const [mergedAudioUrl, setMergedAudioUrl] = useState(null);
+
+    const inputRef = useRef(null);
+
+    const [importedAudioList, setImportedAudioList] = useState([]);
 
     // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
@@ -153,6 +159,8 @@ function SpeechToText() {
 
         mediaRecorder.current.onstop = () => {
             const audioBlob = new Blob(audioChunks, { type: mimeType });
+
+            console.log("mediaRecorder audioBlob: ", audioBlob);
 
             const audioUrl = URL.createObjectURL(audioBlob);
 
@@ -532,6 +540,33 @@ function SpeechToText() {
         resetTranscript();
     };
 
+    // * IMPORT AUDIO FUNCTION
+    const handleLabelClick = () => {
+        inputRef.current.click();
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const audioBlob = new Blob([event.target.result], {
+                type: file.type,
+            });
+            setAudioChunks([audioBlob]);
+            const arrayBuffer = event.target.result;
+            const audioContext = new AudioContext();
+            audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
+                const audio = {
+                    name: file.name,
+                    url: URL.createObjectURL(file),
+                    buffer: audioBuffer,
+                };
+                setImportedAudioList([...importedAudioList, audio]);
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
     return (
         <>
             <div className="h-[100vh] font-[Poppins]">
@@ -559,7 +594,20 @@ function SpeechToText() {
                             )}
                         </button>
 
-                        <Uploader />
+                        <input
+                            type="file"
+                            className="hidden"
+                            ref={inputRef}
+                            onChange={handleFileChange}
+                            accept="audio/*"
+                        />
+                        <label
+                            htmlFor="file"
+                            className="btn btn-secondary w-[270px] me-4 flex space-x-2 text-white justify-center items-center"
+                            onClick={handleLabelClick}
+                        >
+                            Import Audio
+                        </label>
 
                         <button
                             id="transcribeBtn"
@@ -586,6 +634,94 @@ function SpeechToText() {
                             <RxReset /> <span>Reset Transcript</span>
                         </button>
                     </div>
+
+                    {/** AUDIO RECORDED PREVIEW */}
+                    <div className="container space-y-5 mt-5">
+                        <div className="flex items-center">
+                            <h1 className="text-2xl font-bold">
+                                Imported Audio Preview:
+                            </h1>
+                        </div>
+
+                        {importedAudioList.map((audio, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center justify-around"
+                            >
+                                <h3>{audio.name}</h3>
+                                <audio src={audio.url} controls />
+                            </div>
+                        ))}
+                        <div className="w-[100%] mx-auto mt-5 space-y-3">
+                            <label htmlFor="startTrim">
+                                Set Start of Trim:
+                            </label>
+                            <span> {startTrim} seconds</span>
+                            <input
+                                type="range"
+                                name="start"
+                                id="startTrim"
+                                min="0"
+                                max="100"
+                                value={startTrim}
+                                onChange={(e) => setStartTrim(e.target.value)}
+                                className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
+                            />
+                            <label htmlFor="endTrim">Set End of Trim:</label>
+                            <span> {endTrim} seconds</span>
+                            <input
+                                type="range"
+                                name="end"
+                                id="endTrim"
+                                min="0"
+                                max={
+                                    audioBufferSource
+                                        ? audioBufferSource.duration
+                                        : 100
+                                }
+                                value={endTrim}
+                                onChange={(e) => setEndTrim(e.target.value)}
+                                className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
+                            />
+
+                            <div className="flex justify-center">
+                                <button
+                                    id="trimBtn"
+                                    className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                    onClick={handleTrimButtonClick}
+                                >
+                                    <RxReset /> <span>Trim Audio</span>
+                                </button>
+                                <button
+                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                    onClick={handleDownload}
+                                >
+                                    <BsDownload />{" "}
+                                    <span>Download Trimmed Audio</span>
+                                </button>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <button
+                                    className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                    onClick={handlePlay}
+                                    disabled={isPlaying}
+                                >
+                                    {isPlaying
+                                        ? "Playing Audio..."
+                                        : "Play Trimmed Audio"}
+                                </button>
+                                <button
+                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                    onClick={handleSave}
+                                >
+                                    <BsDownload />{" "}
+                                    <span>Save Trimmed Audio</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {/** AUDIO RECORDED PREVIEW */}
                     <div className="container space-y-5 mt-5">
                         <div className="flex items-center">
@@ -731,6 +867,13 @@ function SpeechToText() {
                             <BsDownload /> <span>Merge Audios</span>
                         </button>
                         <audio src={mergedAudioUrl} controls></audio>
+                        <a
+                            className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                            href={mergedAudioUrl}
+                            download
+                        >
+                            <BsDownload /> <span>Download Merged Audio</span>
+                        </a>
                     </div>
                 </div>
             </div>
