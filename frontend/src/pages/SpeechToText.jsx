@@ -281,7 +281,7 @@ function SpeechToText() {
     };
 
     // * SAVE THE TRIMMED AUDIO FUNCTION
-    const handleSave = () => {
+    const handleSave = async () => {
         if (audioBufferSource) {
             const audioContext = new AudioContext();
 
@@ -303,6 +303,22 @@ function SpeechToText() {
             };
 
             console.log("trimmedAudio: ", trimmedAudio);
+
+            try {
+                const response = await fetch("/api/audios", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(trimmedAudio),
+                });
+
+                const savedTrimmedAudio = await response.json();
+
+                console.log("Saved trimmed audio:", savedTrimmedAudio);
+            } catch (error) {
+                console.error(error);
+            }
 
             const newTrimmedAudioList = [...trimmedAudioList, trimmedAudio];
 

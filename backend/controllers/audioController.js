@@ -1,20 +1,34 @@
 const Audio = require("../models/Audio");
 
 // @desc    Save Audio to Database
-// @route   POST /api/audio
+// @route   POST /api/audios
 // @access  Private
 const saveAudio = async (req, res) => {
-    try {
-        const audio = new Audio({
-            name: req.file.originalname,
-            data: req.file.buffer,
-            contentType: req.file.mimetype,
-        });
+    let { name, url } = req.body;
 
-        await audio.save();
-        res.status(201).send(audio);
-    } catch (error) {
-        res.status(400).send(error);
+    console.log(req.body);
+    if (!name || !url) {
+        res.status(400);
+
+        throw new Error("Please add all fields");
+    }
+
+    const audio = await Audio.create(
+        {
+            name,
+            url,
+        },
+        { timeout: 30000 }
+    );
+
+    if (audio) {
+        res.json({
+            message: "Audio saved successfully!",
+        });
+    } else {
+        res.status(400);
+
+        throw new Error("Invalid audio data");
     }
 };
 

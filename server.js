@@ -27,6 +27,6 @@ app.use(express.urlencoded({ extended: true }));
 // * ROUTES
 app.use("/api/users", require("./backend/routes/userRoutes"));
 
-app.use("/api/audio", require("./backend/routes/audioRoutes"));
+app.use("/api/audios", require("./backend/routes/audioRoutes"));
 
 app.listen(PORT, () => console.log(`Server running at PORT ${PORT}`));
