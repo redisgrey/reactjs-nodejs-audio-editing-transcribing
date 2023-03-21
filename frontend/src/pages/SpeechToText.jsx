@@ -110,14 +110,6 @@ function SpeechToText() {
 
     getMedia(constraints);
 
-    //* TRANSCRIBING START BUTTON
-    const start = () => {
-        setIsListening(true);
-        SpeechRecognition.startListening({
-            continuous: true,
-        });
-    };
-
     //* RECORDING START BUTTON
     const recordStart = () => {
         setIsRecording(true);
@@ -147,12 +139,6 @@ function SpeechToText() {
         setAudioChunks(localAudioChunks);
 
         console.log("recording start");
-    };
-
-    //* TRANSCRIBING STOP BUTTON
-    const stop = () => {
-        setIsListening(false);
-        SpeechRecognition.stopListening();
     };
 
     //*  RECORDING STOP BUTTON
@@ -303,22 +289,6 @@ function SpeechToText() {
             };
 
             console.log("trimmedAudio: ", trimmedAudio);
-
-            try {
-                const response = await fetch("/api/audios", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(trimmedAudio),
-                });
-
-                const savedTrimmedAudio = await response.json();
-
-                console.log("Saved trimmed audio:", savedTrimmedAudio);
-            } catch (error) {
-                console.error(error);
-            }
 
             const newTrimmedAudioList = [...trimmedAudioList, trimmedAudio];
 
@@ -643,23 +613,6 @@ function SpeechToText() {
                             Import Audio
                         </label>
 
-                        <button
-                            id="transcribeBtn"
-                            className="btn btn-success w-50 me-4 space-x-2 flex justify-center items-center"
-                            onClick={isListening ? stop : start}
-                        >
-                            {isListening ? (
-                                <>
-                                    <BsFillStopFill />{" "}
-                                    <span>Stop Transcribing</span>
-                                </>
-                            ) : (
-                                <>
-                                    <BsFillPlayFill />{" "}
-                                    <span>Start Transcribing</span>
-                                </>
-                            )}
-                        </button>
                         <button
                             id="resetBtn"
                             className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
