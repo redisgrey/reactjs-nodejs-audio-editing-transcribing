@@ -18,6 +18,8 @@ import SpeechToText from "./pages/SpeechToText";
 
 import TTS from "./pages/TTS";
 
+import Dashboard from "./pages/Dashboard";
+
 function App() {
     return (
         <>
@@ -29,6 +31,8 @@ function App() {
                     <Route path="/sign-up" element={<Register />} />
 
                     <Route path="/sign-in" element={<Login />} />
+
+                    <Route path="/dashboard" element={<Dashboard />} />
 
                     <Route path="/speech-to-text" element={<SpeechToText />} />
 

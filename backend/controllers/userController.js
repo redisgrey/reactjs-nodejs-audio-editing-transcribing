@@ -92,6 +92,36 @@ const loginUser = async (req, res) => {
     }
 };
 
+// @desc    Logout User
+// @route   POST /api/users/logout
+// @access  Private
+const logoutUser = async (req, res) => {
+    let token;
+
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith("Bearer")
+    ) {
+        try {
+            // Get token from header
+            token = req.headers.authorization.split(" ")[1];
+
+            // verify token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+            if (decoded) {
+                res.json("User successfully logged out!");
+            }
+        } catch (error) {
+            console.log(error);
+
+            res.status(401);
+
+            throw new Error("Not Authorized");
+        }
+    }
+};
+
 // Generate JWT
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
@@ -100,4 +130,5 @@ const generateToken = (id) => {
 module.exports = {
     registerUser,
     loginUser,
+    logoutUser,
 };

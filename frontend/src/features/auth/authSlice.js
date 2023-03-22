@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createAction } from "@reduxjs/toolkit";
 
 import authService from "./authService";
 
@@ -48,6 +48,15 @@ export const login = createAsyncThunk("auth/login", async (user, thunkAPI) => {
     }
 });
 
+export const clearUserDetails = createAction("auth/clearUserDetails");
+
+export const logout = createAsyncThunk(
+    "auth/logout",
+    async (arg, { dispatch }) => {
+        await authService.logout();
+        dispatch(clearUserDetails());
+    }
+);
 export const authSlice = createSlice({
     name: "auth",
     initialState,
@@ -57,6 +66,9 @@ export const authSlice = createSlice({
             state.isError = false;
             state.isSuccess = false;
             state.message = "";
+        },
+        clearUserDetails: (state) => {
+            state.user = null;
         },
     },
     extraReducers: (builder) => {
@@ -84,6 +96,18 @@ export const authSlice = createSlice({
                 state.user = action.payload;
             })
             .addCase(login.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+                state.user = null;
+            })
+            .addCase(logout.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(logout.fulfilled, (state) => {
+                state.user = null;
+            })
+            .addCase(logout.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;

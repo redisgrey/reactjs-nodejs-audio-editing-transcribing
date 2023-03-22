@@ -1,7 +1,27 @@
 import React, { useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
+import { useSelector, useDispatch } from "react-redux";
+
+import { logout, reset } from "../features/auth/authSlice";
+
 function Header() {
     const [open, setOpen] = useState(false);
+
+    const navigate = useNavigate();
+
+    const dispatch = useDispatch();
+
+    const pathname = window.location.pathname;
+
+    const { user } = useSelector((state) => state.auth);
+
+    const onLogout = () => {
+        dispatch(logout());
+        localStorage.setItem("user", null);
+        navigate("/");
+    };
 
     return (
         <>
@@ -33,12 +53,23 @@ function Header() {
                             </a>
                         </div>
                         <div className="flex w-[100px] justify-center">
-                            <a
-                                className="hover:text-[#00000079]"
-                                href="/sign-in"
-                            >
-                                Sign In
-                            </a>
+                            {user && pathname === "/dashboard" ? (
+                                <>
+                                    <a
+                                        className="hover:text-[#00000079]"
+                                        onClick={onLogout}
+                                    >
+                                        Logout
+                                    </a>
+                                </>
+                            ) : (
+                                <a
+                                    className="hover:text-[#00000079]"
+                                    href="/sign-in"
+                                >
+                                    Sign In
+                                </a>
+                            )}
                         </div>
                     </div>
 

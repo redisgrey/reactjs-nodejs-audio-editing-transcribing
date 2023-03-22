@@ -28,9 +28,21 @@ const login = async (userData) => {
     return response.data;
 };
 
+// Logout User
+const logout = async () => {
+    const response = await axios.post("http://localhost:5000/api/users/logout");
+
+    if (response.data) {
+        localStorage.removeItem("user");
+    }
+
+    return response.data;
+};
+
 const authService = {
     register,
     login,
+    logout,
 };
 
 export default authService;
