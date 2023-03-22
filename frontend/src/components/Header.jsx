@@ -40,7 +40,10 @@ function Header() {
                             </a>
                         </div>
                         <div className="flex w-[100px] justify-center">
-                            {user && pathname === "/dashboard" ? (
+                            {(user && pathname === "/dashboard") ||
+                            pathname === "/trim-merge" ||
+                            pathname === "/speech-to-text" ||
+                            pathname === "/text-to-speech" ? (
                                 <>
                                     <a
                                         className="hover:text-[#00000079]"
@@ -60,7 +63,10 @@ function Header() {
                         </div>
                     </div>
 
-                    {user && pathname === "/dashboard" ? (
+                    {(user && pathname === "/dashboard") ||
+                    pathname === "/trim-merge" ||
+                    pathname === "/speech-to-text" ||
+                    pathname === "/text-to-speech" ? (
                         <div className="flex justify-between mx-10 items-center md:hidden">
                             <div>
                                 <img

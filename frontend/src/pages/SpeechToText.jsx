@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
+import { useSelector } from "react-redux";
+
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
 import { RxReset } from "react-icons/rx";
@@ -13,6 +15,8 @@ import SpeechRecognition, {
 const mimeType = "audio/mpeg";
 
 function SpeechToText() {
+    const { user } = useSelector((state) => state.auth);
+
     //* INITIALIZING THE SPEECHRECOGNITION API
     const {
         transcript,
@@ -148,81 +152,97 @@ function SpeechToText() {
 
     return (
         <>
-            <div className="h-[100vh] font-[Poppins]">
-                <div className="container mt-48">
-                    <h1 className="text-center font-bold text-4xl mb-3">
-                        Speech to Text in Javascript
-                    </h1>
-
-                    <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
-                        <button
-                            id="recordBtn"
-                            className="btn btn-danger w-50 me-4 space-x-2 flex justify-center items-center"
-                            onClick={isRecording ? recordStop : recordStart}
-                        >
-                            {isRecording ? (
-                                <>
-                                    <BsFillStopFill />{" "}
-                                    <span>Stop Recording</span>
-                                </>
-                            ) : (
-                                <>
-                                    <BsFillPlayFill />{" "}
-                                    <span>Start Recording</span>
-                                </>
-                            )}
-                        </button>
-
-                        <button
-                            id="resetBtn"
-                            className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
-                            onClick={reset}
-                        >
-                            <RxReset /> <span>Reset Transcript</span>
-                        </button>
-                    </div>
-
-                    <div className="form-group mt-5">
-                        <textarea
-                            id="textarea"
-                            rows="6"
-                            className="form-control"
-                            value={transcript}
-                            readOnly
-                        ></textarea>
-                        <button
-                            className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                            onClick={downloadTranscript}
-                        >
-                            Download Transcript
-                        </button>
-                    </div>
-
-                    {/** AUDIO RECORDED PREVIEW */}
-                    <div className="container space-y-5 mt-5">
-                        <div className="flex items-center">
-                            <h1 className="text-2xl font-bold">
-                                Recorded Audio Preview:
+            {user ? (
+                <>
+                    {" "}
+                    <div className="h-[100vh] font-[Poppins]">
+                        <div className="container mt-48">
+                            <h1 className="text-center font-bold text-4xl mb-3">
+                                Speech to Text in Javascript
                             </h1>
-                        </div>
 
-                        <div className="flex items-center justify-between">
-                            <audio
-                                src={audioURL}
-                                controls
-                                className="w-[80%]"
-                            ></audio>
-                            <a
-                                className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                href={audioURL}
-                                download
-                            >
-                                <BsDownload /> <span>Download</span>
-                            </a>
+                            <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
+                                <button
+                                    id="recordBtn"
+                                    className="btn btn-danger w-50 me-4 space-x-2 flex justify-center items-center"
+                                    onClick={
+                                        isRecording ? recordStop : recordStart
+                                    }
+                                >
+                                    {isRecording ? (
+                                        <>
+                                            <BsFillStopFill />{" "}
+                                            <span>Stop Recording</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <BsFillPlayFill />{" "}
+                                            <span>Start Recording</span>
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    id="resetBtn"
+                                    className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                    onClick={reset}
+                                >
+                                    <RxReset /> <span>Reset Transcript</span>
+                                </button>
+                            </div>
+
+                            <div className="form-group mt-5">
+                                <textarea
+                                    id="textarea"
+                                    rows="6"
+                                    className="form-control"
+                                    value={transcript}
+                                    readOnly
+                                ></textarea>
+                                <button
+                                    className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                    onClick={downloadTranscript}
+                                >
+                                    Download Transcript
+                                </button>
+                            </div>
+
+                            {/** AUDIO RECORDED PREVIEW */}
+                            <div className="container space-y-5 mt-5">
+                                <div className="flex items-center">
+                                    <h1 className="text-2xl font-bold">
+                                        Recorded Audio Preview:
+                                    </h1>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                    <audio
+                                        src={audioURL}
+                                        controls
+                                        className="w-[80%]"
+                                    ></audio>
+                                    <a
+                                        className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                        href={audioURL}
+                                        download
+                                    >
+                                        <BsDownload /> <span>Download</span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </div>{" "}
+                </>
+            ) : (
+                <>
+                    {" "}
+                    <NotFound
+                        title={"Not Authorized"}
+                        body={"Please sign in to access Script features."}
+                        status="401"
+                    />{" "}
+                </>
+            )}
         </>
     );
 }
