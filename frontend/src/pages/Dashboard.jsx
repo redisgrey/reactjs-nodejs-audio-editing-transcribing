@@ -2,6 +2,8 @@ import React from "react";
 
 import { useSelector } from "react-redux";
 
+import NotFound from "./NotFound";
+
 function Dashboard() {
     const { user } = useSelector((state) => state.auth);
     return (
@@ -14,7 +16,11 @@ function Dashboard() {
                 </>
             ) : (
                 <>
-                    <div className="mt-56">Sign in to access the dashboard</div>
+                    <NotFound
+                        title={"Not Authorized"}
+                        body={"Please sign in to access the dashboard."}
+                        status="401"
+                    />
                 </>
             )}
         </>

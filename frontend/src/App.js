@@ -20,6 +20,8 @@ import TTS from "./pages/TTS";
 
 import Dashboard from "./pages/Dashboard";
 
+import TrimMerge from "./pages/TrimMerge";
+
 function App() {
     return (
         <>
@@ -35,6 +37,8 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
 
                     <Route path="/speech-to-text" element={<SpeechToText />} />
+
+                    <Route path="/trim-merge" element={<TrimMerge />} />
 
                     <Route path="/text-to-speech" element={<TTS />} />
 
