@@ -4,6 +4,12 @@ import { useSelector } from "react-redux";
 
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
+import { FaUndoAlt, FaRedoAlt } from "react-icons/fa";
+
+import { AiFillDelete } from "react-icons/ai";
+
+import { CgMergeVertical } from "react-icons/cg";
+
 import { RxReset } from "react-icons/rx";
 
 import {
@@ -249,94 +255,93 @@ function TrimMerge() {
             {user ? (
                 <>
                     {" "}
-                    <div className="h-[100vh] font-[Poppins]">
-                        <div className="container mt-48">
-                            <h1 className="text-center font-bold text-4xl mb-3">
-                                Trim and Merge Audio
-                            </h1>
+                    <div className="font-[Poppins]">
+                        <div className="container  p-10">
+                            <div className="bg-gray-300 p-3 px-4 rounded-lg">
+                                <div className="form-group w-[100%] m-auto flex justify-between text-center mt-3">
+                                    <button
+                                        id="recordBtn"
+                                        className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={
+                                            isRecording
+                                                ? stopRecording
+                                                : startRecording
+                                        }
+                                    >
+                                        {isRecording ? (
+                                            <>
+                                                <BsFillStopFill />{" "}
+                                                <span>Stop Recording</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <BsFillPlayFill />{" "}
+                                                <span>Start Recording</span>
+                                            </>
+                                        )}
+                                    </button>
 
-                            <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
-                                <button
-                                    id="recordBtn"
-                                    className="btn btn-danger w-50 me-4 space-x-2 flex justify-center items-center"
-                                    onClick={
-                                        isRecording
-                                            ? stopRecording
-                                            : startRecording
-                                    }
-                                >
-                                    {isRecording ? (
-                                        <>
-                                            <BsFillStopFill />{" "}
-                                            <span>Stop Recording</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <BsFillPlayFill />{" "}
-                                            <span>Start Recording</span>
-                                        </>
-                                    )}
-                                </button>
-
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    ref={inputRef}
-                                    onChange={fileChangeHandler}
-                                    accept="audio/*"
-                                />
-                                <label
-                                    htmlFor="file"
-                                    className="btn btn-secondary w-[270px] me-4 flex space-x-2 text-white justify-center items-center"
-                                    onClick={fileLabelClick}
-                                >
-                                    Import Audio
-                                </label>
-                            </div>
-
-                            {/** IMPORTED AUDIO PREVIEW */}
-                            <div className="container space-y-5 mt-5">
-                                <div className="flex items-center">
-                                    <h1 className="text-2xl font-bold">
-                                        Imported Audio Preview:
-                                    </h1>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        ref={inputRef}
+                                        onChange={fileChangeHandler}
+                                        accept="audio/*"
+                                    />
+                                    <label
+                                        htmlFor="file"
+                                        className="btn btn-secondary w-[50%] me-4 flex space-x-2 text-white justify-center items-center"
+                                        onClick={fileLabelClick}
+                                    >
+                                        <BsDownload /> <span>Import Audio</span>
+                                    </label>
                                 </div>
 
-                                {importedAudioList.map((audio, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center justify-around"
-                                    >
-                                        <h3>{audio.name}</h3>
-                                        <audio src={audio.url} controls />
+                                {/** IMPORTED AUDIO PREVIEW */}
+                                <div className="container space-y-5 mt-5 ">
+                                    <div className="flex items-center ">
+                                        <h1 className="text-2xl font-medium">
+                                            Imported Audio Preview:
+                                        </h1>
                                     </div>
-                                ))}
-                            </div>
 
-                            {/** AUDIO RECORDED PREVIEW */}
-                            <div className="container space-y-5 mt-5">
-                                <div className="flex items-center">
-                                    <h1 className="text-2xl font-bold">
-                                        Recorded Audio Preview:
-                                    </h1>
-                                    <span className="text-2xl font-bold">
-                                        {originalAudioDuration} seconds
-                                    </span>
+                                    {importedAudioList.map((audio, index) => (
+                                        <div key={index}>
+                                            <audio
+                                                src={audio.url}
+                                                className="w-[100%]"
+                                                controls
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
 
-                                <div className="flex items-center justify-between">
-                                    <audio
-                                        src={audioURL}
-                                        controls
-                                        className="w-[80%]"
-                                    ></audio>
-                                    <a
-                                        className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                        href={audioURL}
-                                        download
-                                    >
-                                        <BsDownload /> <span>Download</span>
-                                    </a>
+                                {/** AUDIO RECORDED PREVIEW */}
+                                <div className="container space-y-5 mt-5">
+                                    <div className="flex items-center">
+                                        <h1 className="text-2xl font-medium">
+                                            Recorded Audio Preview:{" "}
+                                        </h1>
+                                        <span className="text-2xl font-medium">
+                                            {originalAudioDuration} seconds
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <audio
+                                            src={audioURL}
+                                            controls
+                                            className="w-[70%]"
+                                        ></audio>
+                                        <a
+                                            className="flex items-center space-x-2 btn text-white bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
+                                            href={audioURL}
+                                            download
+                                        >
+                                            <BsDownload />{" "}
+                                            <span>Download Audio</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                             <div className="w-[100%] mx-auto mt-5 space-y-3">
@@ -375,16 +380,16 @@ function TrimMerge() {
                                     className="appearance-none w-full h-2 bg-gray-300 rounded-lg outline-none"
                                 />
 
-                                <div className="flex justify-center">
+                                <div className="flex justify-between">
                                     <button
                                         id="trimBtn"
-                                        className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                        className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
                                         onClick={trimButtonHandler}
                                     >
                                         <RxReset /> <span>Trim Audio</span>
                                     </button>
                                     <button
-                                        className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                        className="flex items-center w-50 justify-center  space-x-2 btn text-white bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
                                         onClick={trimmedAudioDownload}
                                     >
                                         <BsDownload />{" "}
@@ -392,18 +397,24 @@ function TrimMerge() {
                                     </button>
                                 </div>
 
-                                <div className="flex justify-center">
+                                <div className="flex justify-between">
                                     <button
-                                        className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                        className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
                                         onClick={trimmedAudioPlay}
                                         disabled={isPlaying}
                                     >
-                                        {isPlaying
-                                            ? "Playing Audio..."
-                                            : "Play Trimmed Audio"}
+                                        {isPlaying ? (
+                                            "Playing Audio..."
+                                        ) : (
+                                            <>
+                                                {" "}
+                                                <BsFillPlayFill /> Play Trimmed
+                                                Audio
+                                            </>
+                                        )}
                                     </button>
                                     <button
-                                        className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                        className="flex items-center w-50 justify-center  space-x-2 btn text-white bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
                                         onClick={trimmedAudioSave}
                                     >
                                         <BsDownload />{" "}
@@ -412,68 +423,101 @@ function TrimMerge() {
                                 </div>
                             </div>
 
-                            <div className="container space-y-5 mt-5">
-                                <h1 className="text-2xl font-bold">
-                                    Audio List
-                                </h1>
+                            <div className="container space-y-5 mt-5 bg-gray-300 p-3 px-4 rounded-lg">
+                                <div className="flex justify-between">
+                                    <h1 className="text-2xl font-medium">
+                                        Audio List
+                                    </h1>
 
-                                <button
-                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                    onClick={undoTrimmedAudioDelete}
-                                >
-                                    Undo
-                                </button>
-                                <button
-                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                    onClick={redoTrimmedAudioDelete}
-                                >
-                                    Redo
-                                </button>
+                                    <div className="flex space-x-5 ">
+                                        <button
+                                            className="flex items-center justify-center  space-x-2 btn text-white bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
+                                            onClick={undoTrimmedAudioDelete}
+                                        >
+                                            <FaUndoAlt /> <span> Undo</span>
+                                        </button>
+                                        <button
+                                            className="flex items-center justify-center  space-x-2 btn bg-[#E09F3e] hover:bg-[#e09f3e83] px-5 py-2 rounded-lg"
+                                            onClick={redoTrimmedAudioDelete}
+                                        >
+                                            <FaRedoAlt /> <span> Redo</span>
+                                        </button>
+                                    </div>
+                                </div>
 
-                                {trimmedAudioListWithChecked.map(
-                                    (audio, index) => (
-                                        <div key={index}>
-                                            <input
-                                                type="checkbox"
-                                                checked={audio.checked}
-                                                onChange={(e) =>
-                                                    audioListCheckboxChange(
-                                                        e,
-                                                        index
-                                                    )
-                                                }
-                                            />
-                                            <label>{audio.name}</label>
-                                            <audio
-                                                src={audio.url}
-                                                controls
-                                            ></audio>
-                                            <button
-                                                className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                                onClick={trimmedAudioDelete}
+                                {trimmedAudioListWithChecked.length >= 1 ? (
+                                    trimmedAudioListWithChecked.map(
+                                        (audio, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex w-[100%] justify-between"
                                             >
-                                                <BsDownload />{" "}
-                                                <span>Delete </span>
-                                            </button>
-                                        </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={audio.checked}
+                                                    onChange={(e) =>
+                                                        audioListCheckboxChange(
+                                                            e,
+                                                            index
+                                                        )
+                                                    }
+                                                />
+
+                                                <audio
+                                                    src={audio.url}
+                                                    controls
+                                                    className="w-[75%]"
+                                                ></audio>
+                                                <button
+                                                    className="flex items-center justify-center  space-x-2 btn btn-secondary px-5 py-2 rounded-lg"
+                                                    onClick={trimmedAudioDelete}
+                                                >
+                                                    <AiFillDelete />{" "}
+                                                    <span>Delete </span>
+                                                </button>
+                                            </div>
+                                        )
                                     )
+                                ) : (
+                                    <>
+                                        <div>
+                                            Saved Trimmed Audios will be listed
+                                            here
+                                        </div>
+                                    </>
                                 )}
 
-                                <button
-                                    className="flex items-center justify-center  space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                    onClick={audioMergeHandler}
-                                >
-                                    <BsDownload /> <span>Merge Audios</span>
-                                </button>
-                                <audio src={mergedAudioUrl} controls></audio>
-                                <a
-                                    className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
-                                    href={mergedAudioUrl}
-                                    download
-                                >
-                                    <BsDownload />{" "}
-                                    <span>Download Merged Audio</span>
-                                </a>
+                                {trimmedAudioListWithChecked.length > 1 ? (
+                                    <>
+                                        {" "}
+                                        <div className="flex justify-center">
+                                            <button
+                                                className="flex items-center justify-center  space-x-2 btn bg-[#E09F3e] hover:bg-[#e09f3e83] px-5 py-2 rounded-lg"
+                                                onClick={audioMergeHandler}
+                                            >
+                                                <CgMergeVertical />{" "}
+                                                <span>Merge Audios</span>
+                                            </button>
+                                        </div>
+                                        <audio
+                                            src={mergedAudioUrl}
+                                            controls
+                                            className="w-[100%]"
+                                        ></audio>
+                                        <div className="flex justify-center">
+                                            <a
+                                                className="flex items-center space-x-2 btn text-white bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
+                                                href={mergedAudioUrl}
+                                                download
+                                            >
+                                                <BsDownload />{" "}
+                                                <span>
+                                                    Download Merged Audio
+                                                </span>
+                                            </a>
+                                        </div>
+                                    </>
+                                ) : null}
                             </div>
                         </div>
                     </div>{" "}

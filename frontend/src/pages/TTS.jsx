@@ -31,31 +31,29 @@ function TTS() {
             {user ? (
                 <>
                     {" "}
-                    <div className="h-[100vh] font-[Poppins]">
-                        <div className="container mt-48">
-                            <h1 className="text-center font-bold text-4xl mb-3">
-                                Speech to Text in Javascript
-                            </h1>
+                    <div className=" font-[Poppins] bg-gray-300">
+                        <div className="container p-10">
                             <div className="form-group mt-5">
                                 <textarea
                                     id="textarea"
-                                    rows="6"
+                                    rows="10"
                                     className="form-control"
                                     value={value}
                                     onChange={setValueDownload}
+                                    placeholder="Enter your text here..."
                                 ></textarea>
                             </div>
 
                             <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
                                 <button
                                     id="resetBtn"
-                                    className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                    className="btn bg-[#2081c3] hover:bg-[#2082c373] w-50 me-4 space-x-2 flex justify-center items-center"
                                     onClick={() => setValue("")}
                                 >
                                     <RxReset /> <span>Reset Transcript</span>
                                 </button>
                                 <a
-                                    className="flex items-center w-50 justify-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                    className="flex items-center w-50 justify-center space-x-2 text-white btn bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
                                     href={textURL}
                                     download
                                 >

@@ -20,7 +20,7 @@ function Header() {
     const onLogout = () => {
         dispatch(logout());
         localStorage.setItem("user", null);
-        navigate("/");
+        navigate("/sign-in");
     };
 
     return (

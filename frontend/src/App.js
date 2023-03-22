@@ -14,13 +14,7 @@ import Login from "./pages/Login";
 
 import Register from "./pages/Register";
 
-import SpeechToText from "./pages/SpeechToText";
-
-import TTS from "./pages/TTS";
-
 import Dashboard from "./pages/Dashboard";
-
-import TrimMerge from "./pages/TrimMerge";
 
 function App() {
     return (
@@ -35,12 +29,6 @@ function App() {
                     <Route path="/sign-in" element={<Login />} />
 
                     <Route path="/dashboard" element={<Dashboard />} />
-
-                    <Route path="/speech-to-text" element={<SpeechToText />} />
-
-                    <Route path="/trim-merge" element={<TrimMerge />} />
-
-                    <Route path="/text-to-speech" element={<TTS />} />
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -154,17 +154,16 @@ function SpeechToText() {
         <>
             {user ? (
                 <>
-                    {" "}
-                    <div className="h-[100vh] font-[Poppins]">
-                        <div className="container mt-48">
-                            <h1 className="text-center font-bold text-4xl mb-3">
+                    <div className=" font-[Poppins] bg-gray-300">
+                        <div className="container p-10">
+                            {/* <h1 className="text-center font-bold text-4xl mb-3">
                                 Speech to Text in Javascript
-                            </h1>
+                            </h1> */}
 
-                            <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
+                            <div className="form-group w-[100%] m-auto flex justify-between text-center mt-3">
                                 <button
                                     id="recordBtn"
-                                    className="btn btn-danger w-50 me-4 space-x-2 flex justify-center items-center"
+                                    className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
                                     onClick={
                                         isRecording ? recordStop : recordStart
                                     }
@@ -184,7 +183,7 @@ function SpeechToText() {
 
                                 <button
                                     id="resetBtn"
-                                    className="btn btn-primary w-50 me-4 space-x-2 flex justify-center items-center"
+                                    className="btn bg-[#2081c3] hover:bg-[#2082c373] w-50 me-4 space-x-2 flex justify-center items-center"
                                     onClick={reset}
                                 >
                                     <RxReset /> <span>Reset Transcript</span>
@@ -200,10 +199,11 @@ function SpeechToText() {
                                     readOnly
                                 ></textarea>
                                 <button
-                                    className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                    className="flex items-center space-x-2 mt-5 mx-auto text-white btn bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
                                     onClick={downloadTranscript}
                                 >
-                                    Download Transcript
+                                    <BsDownload />{" "}
+                                    <span>Download Transcript</span>
                                 </button>
                             </div>
 
@@ -215,18 +215,19 @@ function SpeechToText() {
                                     </h1>
                                 </div>
 
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between space-x-5">
                                     <audio
                                         src={audioURL}
                                         controls
-                                        className="w-[80%]"
+                                        className="w-[70%]"
                                     ></audio>
                                     <a
-                                        className="flex items-center space-x-2 btn btn-danger px-5 py-2 rounded-lg"
+                                        className="flex items-center space-x-2 text-white btn bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
                                         href={audioURL}
                                         download
                                     >
-                                        <BsDownload /> <span>Download</span>
+                                        <BsDownload />{" "}
+                                        <span>Download Audio</span>
                                     </a>
                                 </div>
                             </div>
