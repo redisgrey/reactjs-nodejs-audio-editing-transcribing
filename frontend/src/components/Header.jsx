@@ -29,20 +29,7 @@ function Header() {
                 <nav>
                     {/* NAVIGATION IN MID SCREEN ONWARDS */}
                     <div className="hidden justify-between items-center md:flex">
-                        <div className="flex justify-around w-[200px]">
-                            <a
-                                className="hover:text-[#00000079]"
-                                href="/features"
-                            >
-                                Features
-                            </a>
-                            <a
-                                className="hover:text-[#00000079]"
-                                href="/pricing"
-                            >
-                                Pricing
-                            </a>
-                        </div>
+                        <div className="flex justify-around w-[200px]"></div>
                         <div>
                             <a href="/">
                                 <img
@@ -73,40 +60,59 @@ function Header() {
                         </div>
                     </div>
 
-                    {/* NAVIGATION IN SMALL SCREEN */}
-                    <div className="flex justify-between items-center md:hidden">
-                        <div>
-                            <img
-                                className="w-[150px] h-[60px]"
-                                src="./images/logo.png"
-                                alt="Logo"
-                            />
+                    {user && pathname === "/dashboard" ? (
+                        <div className="flex justify-between mx-10 items-center md:hidden">
+                            <div>
+                                <img
+                                    className="w-[150px] h-[60px]"
+                                    src="./images/logo.png"
+                                    alt="Logo"
+                                />
+                            </div>
+                            <a
+                                className="hover:text-[#00000079]"
+                                onClick={onLogout}
+                            >
+                                Logout
+                            </a>
                         </div>
-                        {/* HAMBURGER ICON */}
-                        <div className="fixed top-2 right-10">
-                            {open === true ? (
-                                <button
-                                    id="hamburgerBtn"
-                                    className="block open hamburger md:hidden focus:outline-none"
-                                    onClick={() => setOpen(false)}
-                                >
-                                    <span className="hamburger-top"></span>
-                                    <span className="hamburger-middle"></span>
-                                    <span className="hamburger-bottom"></span>
-                                </button>
-                            ) : (
-                                <button
-                                    id="hamburgerBtn"
-                                    className="block hamburger md:hidden focus:outline-none"
-                                    onClick={() => setOpen(true)}
-                                >
-                                    <span className="hamburger-top"></span>
-                                    <span className="hamburger-middle"></span>
-                                    <span className="hamburger-bottom"></span>
-                                </button>
-                            )}
+                    ) : (
+                        /* NAVIGATION IN SMALL SCREEN */
+                        <div className="flex justify-between items-center md:hidden">
+                            <div>
+                                <img
+                                    className="w-[150px] h-[60px]"
+                                    src="./images/logo.png"
+                                    alt="Logo"
+                                />
+                            </div>
+                            {/* HAMBURGER ICON */}
+                            <div className="fixed top-2 right-10">
+                                {open === true ? (
+                                    <button
+                                        id="hamburgerBtn"
+                                        className="block open hamburger md:hidden focus:outline-none"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        <span className="hamburger-top"></span>
+                                        <span className="hamburger-middle"></span>
+                                        <span className="hamburger-bottom"></span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        id="hamburgerBtn"
+                                        className="block hamburger md:hidden focus:outline-none"
+                                        onClick={() => setOpen(true)}
+                                    >
+                                        <span className="hamburger-top"></span>
+                                        <span className="hamburger-middle"></span>
+                                        <span className="hamburger-bottom"></span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
+
                     {open === true ? (
                         <div>
                             <div className="flex flex-col justify-center items-center relative z-50 space-y-10 p-10 shadow-lg bg-white">
