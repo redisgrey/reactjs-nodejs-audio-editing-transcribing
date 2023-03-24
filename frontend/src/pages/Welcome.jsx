@@ -1,11 +1,6 @@
 import React from "react";
 
 import TypeWriterEffect from "react-typewriter-effect";
-import LandingFeat from "./parts/LandingFeat";
-import LandingNewsletter from "./parts/LandingNewsletter";
-import LandingPricing from "./parts/LandingPricing";
-import LandingStats from "./parts/LandingStats";
-import LandingTestimonial from "./parts/LandingTestimonial";
 
 function Welcome() {
     return (
@@ -154,12 +149,6 @@ function Welcome() {
                                 >
                                     Get started
                                 </a>
-                                <a
-                                    href="/features"
-                                    className="text-sm font-semibold leading-6 text-gray-600 hover:text-[#00000080]"
-                                >
-                                    Learn more <span aria-hidden="true">→</span>
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -236,12 +225,6 @@ function Welcome() {
                         </div>
                     </div>
                 </div>
-
-                <LandingFeat />
-                <LandingStats />
-                <LandingPricing />
-                <LandingTestimonial />
-                <LandingNewsletter />
             </main>
         </>
     );

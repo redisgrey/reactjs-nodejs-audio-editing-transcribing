@@ -62,7 +62,7 @@ function TTS() {
                                 </a>
                             </div>
                         </div>
-                        <div className="mt-10 container">
+                        <div className="mt-10 container p-5 bg-gray-400">
                             <h1 className="font-bold text-3xl text-center">
                                 Check your transcript here.
                             </h1>

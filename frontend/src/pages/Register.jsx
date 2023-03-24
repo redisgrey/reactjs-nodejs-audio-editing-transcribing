@@ -12,6 +12,8 @@ import Spinner from "../components/Spinner";
 
 import { LockClosedIcon } from "@heroicons/react/20/solid";
 
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+
 function Register() {
     const [registrationForm, setRegistrationForm] = useState({
         fullName: "",
@@ -20,6 +22,14 @@ function Register() {
     });
 
     const { fullName, emailAddress, password } = registrationForm;
+
+    const [showPassword, setShowPassword] = useState(false);
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
@@ -30,17 +40,15 @@ function Register() {
     );
 
     useEffect(() => {
-        if (isError) {
-            toast.error(message);
-        }
-
         if (isSuccess) {
-            toast.success("Successfully registered your account!");
-            navigate("/dashboard");
+            toast.success(
+                "Successfully registered your account! Please sign-in using your email address and password to access your dashboard. Thank you!"
+            );
+            navigate("/sign-in");
         }
 
         dispatch(reset());
-    }, [user, isError, isSuccess, message, navigate, dispatch]);
+    }, [user, isSuccess, message, navigate, dispatch]);
 
     const onChange = (e) => {
         setRegistrationForm((prevState) => ({
@@ -58,6 +66,17 @@ function Register() {
             password,
         };
 
+        let passwordFormat =
+            /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
+
+        if (password.match(passwordFormat)) {
+            userData.password = password;
+        } else {
+            setError(
+                "Password should be between 8 to 15 characters which contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character"
+            );
+        }
+
         //console.log(userData);
         dispatch(register(userData));
     };
@@ -74,6 +93,15 @@ function Register() {
                         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
                             Register your account
                         </h2>
+
+                        {error ? (
+                            <>
+                                {" "}
+                                <div className="mt-4 bg-red-500 p-3 rounded-lg text-white text-sm">
+                                    {error}
+                                </div>{" "}
+                            </>
+                        ) : null}
                     </div>
                     <form className="mt-8 space-y-6" onSubmit={onSubmit}>
                         <div className="-space-y-px rounded-md shadow-sm">
@@ -114,10 +142,11 @@ function Register() {
                                 <label htmlFor="password" className="sr-only ">
                                     Password
                                 </label>
+
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={onChange}
@@ -126,6 +155,16 @@ function Register() {
                                 />
                             </div>
                         </div>
+                        <span
+                            className="relative bottom-7 left-[415px]"
+                            onClick={togglePasswordVisibility}
+                        >
+                            {showPassword ? (
+                                <AiFillEyeInvisible />
+                            ) : (
+                                <AiFillEye />
+                            )}
+                        </span>
 
                         <div className="flex items-center justify-between">
                             <div className="flex items-center text-sm">
