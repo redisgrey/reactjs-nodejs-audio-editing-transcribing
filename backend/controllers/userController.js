@@ -8,54 +8,62 @@ const bcrypt = require("bcrypt");
 // @route   POST /api/users/register
 // @access  Public
 const registerUser = async (req, res) => {
-    let { fullName, emailAddress, password } = req.body;
+    try {
+        let { fullName, emailAddress, password } = req.body;
 
-    if (!fullName || !emailAddress || !password) {
-        res.status(400);
+        if (!fullName || !emailAddress || !password) {
+            res.status(400);
+            throw new Error("Please add all fields");
+        }
 
-        throw new Error("Please add all fields");
-    }
+        //Check password pattern
+        let passwordFormat =
+            /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
 
-    //Check password pattern
-    let passwordFormat =
-        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
+        if (password.match(passwordFormat)) {
+            // Hash the password
+            const salt = await bcrypt.genSalt(10);
+            var hashedPassword = await bcrypt.hash(password, salt);
+        } else {
+            res.status(400);
+            throw new Error(
+                "Password should be between 8 to 15 characters which contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character"
+            );
+        }
 
-    if (password.match(passwordFormat)) {
-        // Hash the password
-        const salt = await bcrypt.genSalt(10);
+        // Check if user exists
+        const userExists = await User.findOne({ emailAddress });
 
-        var hashedPassword = await bcrypt.hash(password, salt);
-    } else {
-        res.json(
-            "Password should be between 8 to 15 characters which contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character"
-        );
-    }
+        if (userExists) {
+            throw {
+                status: 400,
+                message:
+                    "User already exists. Please choose a different email address.",
+            };
+        }
 
-    // Check if user exists
-    const userExists = await User.findOne({ emailAddress });
-
-    if (userExists) {
-        res.status(400);
-
-        throw new Error("User already exists");
-    }
-
-    // Create User
-    const user = await User.create({
-        fullName,
-
-        emailAddress,
-        password: hashedPassword,
-    });
-
-    if (user) {
-        res.json({
-            message: "Account successfully created!",
+        // Create User
+        const user = await User.create({
+            fullName,
+            emailAddress,
+            password: hashedPassword,
         });
-    } else {
-        res.status(400);
 
-        throw new Error("Invalid user data");
+        if (user) {
+            res.json({
+                message: "Account successfully created!",
+            });
+        } else {
+            res.status(400);
+            throw new Error("Invalid user data");
+        }
+    } catch (err) {
+        console.error(err);
+        if (err.status && err.message) {
+            res.status(err.status).json({ message: err.message });
+        } else {
+            res.status(500).send("Something went wrong!");
+        }
     }
 };
 
@@ -65,26 +73,29 @@ const registerUser = async (req, res) => {
 // * email address
 // * password
 const loginUser = async (req, res) => {
-    const { emailAddress, password } = req.body;
+    try {
+        const { emailAddress, password } = req.body;
 
-    if (!emailAddress || !password) {
-        res.status(400);
+        if (!emailAddress || !password) {
+            res.status(400);
+            throw new Error("Please add all fields");
+        }
 
-        throw new Error("Please add all fields");
-    }
+        const user = await User.findOne({ emailAddress: emailAddress });
 
-    const user = await User.findOne({ emailAddress: emailAddress });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-        res.json({
-            id: user.id,
-            token: generateToken(user._id),
-            firstName: user.fullName.split(" ")[0],
-        });
-    } else {
-        res.status(400);
-
-        throw new Error("Invalid credentials");
+        if (user && (await bcrypt.compare(password, user.password))) {
+            res.json({
+                id: user.id,
+                token: generateToken(user._id),
+                firstName: user.fullName.split(" ")[0],
+            });
+        } else {
+            res.status(400);
+            throw new Error("Invalid credentials");
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Something went wrong!");
     }
 };
 

@@ -29,13 +29,13 @@ function Register() {
         setShowPassword(!showPassword);
     };
 
-    const [error, setError] = useState("");
+    const [error, setError] = useState(null);
 
     const navigate = useNavigate();
 
     const dispatch = useDispatch();
 
-    const { user, isLoading, isError, isSuccess, message } = useSelector(
+    const { user, isLoading, isSuccess, message } = useSelector(
         (state) => state.auth
     );
 
@@ -57,7 +57,7 @@ function Register() {
         }));
     };
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
 
         const userData = {
@@ -71,14 +71,32 @@ function Register() {
 
         if (password.match(passwordFormat)) {
             userData.password = password;
+            dispatch(register(userData))
+                .unwrap()
+                .then((response) => {
+                    console.log("response: ", response);
+                    if (response && response.data) {
+                        // handle successful registration
+                        console.log(response.data);
+                    } else {
+                        console.error("Response or data is undefined");
+                    }
+                })
+                .catch((error) => {
+                    console.log("error: ", error);
+                    setError(error); // Set error state with the error message
+                    setTimeout(() => {
+                        setError(null);
+                    }, 5000);
+                });
         } else {
             setError(
                 "Password should be between 8 to 15 characters which contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character"
             );
+            setTimeout(() => {
+                setError(null);
+            }, 10000);
         }
-
-        //console.log(userData);
-        dispatch(register(userData));
     };
 
     if (isLoading) {
