@@ -45,12 +45,12 @@ function Header() {
                             pathname === "/speech-to-text" ||
                             pathname === "/text-to-speech" ? (
                                 <>
-                                    <a
+                                    <button
                                         className="hover:text-[#00000079]"
                                         onClick={onLogout}
                                     >
                                         Logout
-                                    </a>
+                                    </button>
                                 </>
                             ) : (
                                 <a
