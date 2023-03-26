@@ -8,9 +8,9 @@ import { toast } from "react-toastify";
 
 import { login, reset } from "../features/auth/authSlice";
 
-import Spinner from "../components/Spinner";
-
 import { LockClosedIcon } from "@heroicons/react/20/solid";
+
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 
 function Login() {
     const [loginForm, setLoginForm] = useState({
@@ -20,26 +20,30 @@ function Login() {
 
     const { emailAddress, password } = loginForm;
 
+    const [showPassword, setShowPassword] = useState(false);
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
+    const [error, setError] = useState(null);
+
     const navigate = useNavigate();
 
     const dispatch = useDispatch();
 
-    const { user, isLoading, isError, isSuccess, message } = useSelector(
+    const { user, isLoading, isSuccess, message } = useSelector(
         (state) => state.auth
     );
 
     useEffect(() => {
-        if (isError) {
-            toast.error(message);
-        }
-
         if (isSuccess) {
             toast.success("Successfully signed in to your account!");
             navigate("/dashboard");
         }
 
         dispatch(reset());
-    }, [user, isError, isSuccess, message, navigate, dispatch]);
+    }, [user, isSuccess, message, navigate, dispatch]);
 
     const onChange = (e) => {
         setLoginForm((prevState) => ({
@@ -56,12 +60,27 @@ function Login() {
             password,
         };
 
-        dispatch(login(userData));
+        // dispatch(login(userData));
+        dispatch(login(userData))
+            .unwrap()
+            .then((response) => {
+                console.log("response: ", response);
+                if (response && response.data) {
+                    // handle successful registration
+                    console.log(response.data);
+                } else {
+                    console.error("Response or data is undefined");
+                }
+            })
+            .catch((error) => {
+                console.log("error: ", error);
+                setError(error); // Set error state with the error message
+                setTimeout(() => {
+                    setError(null);
+                }, 5000);
+            });
     };
 
-    if (isLoading) {
-        return <Spinner />;
-    }
     return (
         <>
             <div className="flex h-[100vh] bg-gray-200 items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -70,6 +89,14 @@ function Login() {
                         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
                             Sign in to your account
                         </h2>
+                        {error ? (
+                            <>
+                                {" "}
+                                <div className="mt-4 bg-red-500 p-3 rounded-lg text-white text-sm">
+                                    {error}
+                                </div>{" "}
+                            </>
+                        ) : null}
                     </div>
                     <form className="mt-8 space-y-6" onSubmit={onSubmit}>
                         <div className="-space-y-px rounded-md shadow-sm">
@@ -98,7 +125,7 @@ function Login() {
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={onChange}
@@ -107,6 +134,16 @@ function Login() {
                                 />
                             </div>
                         </div>
+                        <span
+                            className="relative bottom-7 left-[415px]"
+                            onClick={togglePasswordVisibility}
+                        >
+                            {showPassword ? (
+                                <AiFillEyeInvisible />
+                            ) : (
+                                <AiFillEye />
+                            )}
+                        </span>
 
                         <div className="flex items-center justify-between">
                             <div className="flex items-center text-sm">
@@ -123,6 +160,7 @@ function Login() {
                         <div>
                             <button
                                 type="submit"
+                                disabled={isLoading}
                                 className="group relative flex w-full justify-center rounded-md bg-[#e09F3E] py-2 px-3 text-sm font-semibold text-black hover:bg-[#e09f3e8e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             >
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -131,7 +169,7 @@ function Login() {
                                         aria-hidden="true"
                                     />
                                 </span>
-                                Sign in
+                                {isLoading ? "Loading ..." : "Sign In"}
                             </button>
                         </div>
                     </form>

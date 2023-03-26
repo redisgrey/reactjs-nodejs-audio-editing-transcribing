@@ -16,6 +16,17 @@ const registerUser = async (req, res) => {
             throw new Error("Please add all fields");
         }
 
+        // Check email address pattern
+        let emailFormat = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*\.com$/;
+
+        if (!emailAddress.match(emailFormat)) {
+            res.status(400);
+            throw {
+                status: 400,
+                message: "Email address should be a valid email address.",
+            };
+        }
+
         //Check password pattern
         let passwordFormat =
             /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
@@ -90,12 +101,18 @@ const loginUser = async (req, res) => {
                 firstName: user.fullName.split(" ")[0],
             });
         } else {
-            res.status(400);
-            throw new Error("Invalid credentials");
+            throw {
+                status: 400,
+                message: "Wrong email address or password. Please try again.",
+            };
         }
     } catch (err) {
         console.error(err);
-        res.status(500).send("Something went wrong!");
+        if (err.status && err.message) {
+            res.status(err.status).json({ message: err.message });
+        } else {
+            res.status(500).send("Something went wrong!");
+        }
     }
 };
 

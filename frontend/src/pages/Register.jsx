@@ -8,8 +8,6 @@ import { register, reset } from "../features/auth/authSlice";
 
 import { toast } from "react-toastify";
 
-import Spinner from "../components/Spinner";
-
 import { LockClosedIcon } from "@heroicons/react/20/solid";
 
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -98,10 +96,6 @@ function Register() {
             }, 10000);
         }
     };
-
-    if (isLoading) {
-        return <Spinner />;
-    }
 
     return (
         <>
@@ -199,6 +193,7 @@ function Register() {
                         <div>
                             <button
                                 type="submit"
+                                disabled={isLoading}
                                 className="group relative flex w-full justify-center rounded-md bg-[#e09F3E] py-2 px-3 text-sm font-semibold text-black hover:bg-[#e09f3e8e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             >
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -207,7 +202,7 @@ function Register() {
                                         aria-hidden="true"
                                     />
                                 </span>
-                                Register
+                                {isLoading ? "Loading ..." : "Register"}
                             </button>
                         </div>
                     </form>
