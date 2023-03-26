@@ -1,3 +1,8 @@
+import WaveSurfer from "wavesurfer.js";
+
+// define the waveSurferRef variable
+let waveSurferRef = null;
+
 //* RECORDING START BUTTON
 export const recordStart = (
     stream,
@@ -27,6 +32,16 @@ export const recordStart = (
     setAudioChunks(localAudioChunks);
 
     console.log("recording start");
+
+    // create a new instance of WaveSurfer and set the reference
+    waveSurferRef = WaveSurfer.create({
+        container: "#waveform",
+        waveColor: "red",
+        progressColor: "purple",
+    });
+
+    // load the audio stream
+    waveSurferRef.load(stream);
 };
 
 //*  RECORDING STOP BUTTON
@@ -54,6 +69,9 @@ export const recordStop = (
     };
 
     console.log("recording stop");
+
+    // stop the waveSurfer instance
+    waveSurferRef.stop();
 };
 
 // * IMPORT AUDIO FUNCTION
@@ -65,7 +83,8 @@ export const handleFileChange = (
     event,
     setAudioChunks,
     setImportedAudioList,
-    importedAudioList
+    importedAudioList,
+    setFileURL
 ) => {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -83,6 +102,8 @@ export const handleFileChange = (
                 buffer: audioBuffer,
             };
             setImportedAudioList([...importedAudioList, audio]);
+
+            setFileURL(audio.url);
         });
     };
     reader.readAsArrayBuffer(file);

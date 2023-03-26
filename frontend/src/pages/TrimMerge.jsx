@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 
 import { useSelector } from "react-redux";
 
@@ -11,6 +11,10 @@ import { AiFillDelete } from "react-icons/ai";
 import { CgMergeVertical } from "react-icons/cg";
 
 import { RxReset } from "react-icons/rx";
+
+import Waveform from "../components/Waveform";
+
+import { FileContext } from "../contexts/fileContext";
 
 import {
     recordStart,
@@ -78,6 +82,8 @@ function TrimMerge() {
     const inputRef = useRef(null);
 
     const [importedAudioList, setImportedAudioList] = useState([]);
+
+    const [fileURL, setFileURL] = useContext(FileContext);
 
     // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
@@ -296,6 +302,8 @@ function TrimMerge() {
                                         <BsDownload /> <span>Import Audio</span>
                                     </label>
                                 </div>
+
+                                <Waveform />
 
                                 {/** IMPORTED AUDIO PREVIEW */}
                                 <div className="container space-y-5 mt-5 ">
