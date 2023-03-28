@@ -16,10 +16,6 @@ import Register from "./pages/Register";
 
 import Dashboard from "./pages/Dashboard";
 
-import UploadAudio from "./pages/UploadAudio";
-
-import AudioEditor from "./pages/AudioEditor";
-
 function App() {
     return (
         <>
@@ -33,10 +29,6 @@ function App() {
                     <Route path="/sign-in" element={<Login />} />
 
                     <Route path="/dashboard" element={<Dashboard />} />
-
-                    <Route path="/edit-audio" element={<AudioEditor />} />
-
-                    <Route path="/upload-audio" element={<UploadAudio />} />
 
                     <Route path="*" element={<NotFound />} />
                 </Routes>

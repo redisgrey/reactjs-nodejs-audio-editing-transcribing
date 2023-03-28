@@ -12,10 +12,6 @@ import { CgMergeVertical } from "react-icons/cg";
 
 import { RxReset } from "react-icons/rx";
 
-import Waveform from "../components/Waveform";
-
-import { FileContext } from "../contexts/fileContext";
-
 import {
     recordStart,
     recordStop,
@@ -35,6 +31,7 @@ import {
     bufferToWave,
     handleLabelClick,
     handleFileChange,
+    createWaveForm,
 } from "../js/audioFunctions";
 
 import NotFound from "./NotFound";
@@ -83,7 +80,9 @@ function TrimMerge() {
 
     const [importedAudioList, setImportedAudioList] = useState([]);
 
-    const [fileURL, setFileURL] = useContext(FileContext);
+    const [waveSurfer, setWaveSurfer] = useState(null);
+
+    const [playing, setPlaying] = useState(false);
 
     // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
@@ -93,9 +92,19 @@ function TrimMerge() {
         }
     }, []);
 
+    useEffect(() => {
+        if (waveSurfer) {
+            // Update the waveform when the audio list changes
+            waveSurfer.empty();
+            importedAudioList.forEach((audio) => {
+                waveSurfer.load(audio.url);
+            });
+        }
+    }, [importedAudioList]);
+
     //* MICROPHONE ACCESS
     let constraints = {
-        audio: true,
+        audio: false,
         video: false,
     };
 
@@ -252,8 +261,21 @@ function TrimMerge() {
             event,
             setAudioChunks,
             setImportedAudioList,
-            importedAudioList
+            importedAudioList,
+            setWaveSurfer,
+            setPlaying
         );
+    };
+
+    const handlePlayPause = () => {
+        if (waveSurfer) {
+            if (playing) {
+                waveSurfer.pause();
+            } else {
+                waveSurfer.play();
+            }
+            setPlaying(!playing);
+        }
     };
 
     return (
@@ -263,7 +285,7 @@ function TrimMerge() {
                     {" "}
                     <div className="font-[Poppins]">
                         <div className="container  p-10">
-                            <div className="bg-gray-300 p-3 px-4 rounded-lg">
+                            <div className=" p-3 px-4 rounded-lg">
                                 <div className="form-group w-[100%] m-auto flex justify-between text-center mt-3">
                                     <button
                                         id="recordBtn"
@@ -302,28 +324,38 @@ function TrimMerge() {
                                         <BsDownload /> <span>Import Audio</span>
                                     </label>
                                 </div>
-
-                                <Waveform />
-
-                                {/** IMPORTED AUDIO PREVIEW */}
-                                <div className="container space-y-5 mt-5 ">
-                                    <div className="flex items-center ">
-                                        <h1 className="text-2xl font-medium">
-                                            Imported Audio Preview:
-                                        </h1>
-                                    </div>
-
-                                    {importedAudioList.map((audio, index) => (
-                                        <div key={index}>
-                                            <audio
-                                                src={audio.url}
-                                                className="w-[100%]"
-                                                controls
-                                            />
-                                        </div>
-                                    ))}
+                                <div id="waveform"></div>
+                                <div id="timeline"></div>
+                                <div id="zoom">
+                                    <button onClick={() => waveSurfer.zoom(1)}>
+                                        {"1x"}
+                                    </button>
+                                    <button
+                                        onClick={() => waveSurfer.zoom(0.5)}
+                                    >
+                                        {"-"}
+                                    </button>
+                                    <button
+                                        onClick={() => waveSurfer.zoom(1.5)}
+                                    >
+                                        {"+"}
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            waveSurfer.zoom(
+                                                waveSurfer.getMinZoom()
+                                            )
+                                        }
+                                    >
+                                        {"Fit"}
+                                    </button>
                                 </div>
-
+                                <button
+                                    className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                    onClick={handlePlayPause}
+                                >
+                                    {playing ? "Pause" : "Play"}
+                                </button>{" "}
                                 {/** AUDIO RECORDED PREVIEW */}
                                 <div className="container space-y-5 mt-5">
                                     <div className="flex items-center">

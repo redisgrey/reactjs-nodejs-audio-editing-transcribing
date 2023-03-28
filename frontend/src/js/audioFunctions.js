@@ -1,7 +1,6 @@
 import WaveSurfer from "wavesurfer.js";
 
-// define the waveSurferRef variable
-let waveSurferRef = null;
+import TimelinePlugin from "wavesurfer.js/dist/plugin/wavesurfer.timeline.min.js";
 
 //* RECORDING START BUTTON
 export const recordStart = (
@@ -32,16 +31,6 @@ export const recordStart = (
     setAudioChunks(localAudioChunks);
 
     console.log("recording start");
-
-    // create a new instance of WaveSurfer and set the reference
-    waveSurferRef = WaveSurfer.create({
-        container: "#waveform",
-        waveColor: "red",
-        progressColor: "purple",
-    });
-
-    // load the audio stream
-    waveSurferRef.load(stream);
 };
 
 //*  RECORDING STOP BUTTON
@@ -69,9 +58,6 @@ export const recordStop = (
     };
 
     console.log("recording stop");
-
-    // stop the waveSurfer instance
-    waveSurferRef.stop();
 };
 
 // * IMPORT AUDIO FUNCTION
@@ -84,7 +70,8 @@ export const handleFileChange = (
     setAudioChunks,
     setImportedAudioList,
     importedAudioList,
-    setFileURL
+    setWaveSurfer,
+    setPlaying
 ) => {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -103,7 +90,26 @@ export const handleFileChange = (
             };
             setImportedAudioList([...importedAudioList, audio]);
 
-            setFileURL(audio.url);
+            // Create a new instance of WaveSurfer
+            const waveSurfer = WaveSurfer.create({
+                container: "#waveform",
+                waveColor: "violet",
+                progressColor: "purple",
+                plugins: [
+                    TimelinePlugin.create({
+                        container: "#timeline",
+                    }),
+                ],
+            });
+
+            // Load the audio buffer into WaveSurfer
+            waveSurfer.loadDecodedBuffer(audioBuffer);
+
+            // Set the WaveSurfer instance to state
+            setWaveSurfer(waveSurfer);
+
+            // Set initial playing state to false
+            setPlaying(false);
         });
     };
     reader.readAsArrayBuffer(file);
