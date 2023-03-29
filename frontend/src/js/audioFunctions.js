@@ -85,8 +85,7 @@ export const handleFileChange = (
     importedAudioList,
     setWaveSurfer,
     setPlaying,
-    sliderRef,
-    setSelectedRegion
+    sliderRef
 ) => {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -110,7 +109,6 @@ export const handleFileChange = (
                 container: "#waveform",
                 waveColor: "violet",
                 progressColor: "purple",
-
                 plugins: [
                     TimelinePlugin.create({
                         container: "#timeline",
@@ -138,9 +136,9 @@ export const handleFileChange = (
 
             // Set initial playing state to false
             setPlaying(false);
-            setSelectedRegion(null);
         });
     };
+
     reader.readAsArrayBuffer(file);
 };
 
