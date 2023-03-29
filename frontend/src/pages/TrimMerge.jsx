@@ -281,6 +281,16 @@ function TrimMerge() {
         }
     };
 
+    const handleVolumeUp = (waveSurfer) => {
+        const currentVolume = waveSurfer.getVolume();
+        waveSurfer.setVolume(Math.min(currentVolume + 0.1, 1));
+    };
+
+    const handleVolumeDown = (waveSurfer) => {
+        const currentVolume = waveSurfer.getVolume();
+        waveSurfer.setVolume(Math.max(currentVolume - 0.1, 0));
+    };
+
     return (
         <>
             {user ? (
@@ -344,6 +354,16 @@ function TrimMerge() {
                                     step="0.01"
                                     defaultValue="1"
                                 />
+                                <button
+                                    onClick={() => handleVolumeUp(waveSurfer)}
+                                >
+                                    Volume Up
+                                </button>
+                                <button
+                                    onClick={() => handleVolumeDown(waveSurfer)}
+                                >
+                                    Volume Down
+                                </button>
                                 {/** AUDIO RECORDED PREVIEW */}
                                 <div className="container space-y-5 mt-5">
                                     <div className="flex items-center">
