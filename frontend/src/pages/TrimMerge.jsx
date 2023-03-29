@@ -84,6 +84,8 @@ function TrimMerge() {
 
     const [playing, setPlaying] = useState(false);
 
+    const sliderRef = useRef(null);
+
     // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
         const savedTrimmedAudioList = localStorage.getItem("trimmedAudioList");
@@ -263,7 +265,8 @@ function TrimMerge() {
             setImportedAudioList,
             importedAudioList,
             setWaveSurfer,
-            setPlaying
+            setPlaying,
+            sliderRef
         );
     };
 
@@ -326,36 +329,21 @@ function TrimMerge() {
                                 </div>
                                 <div id="waveform"></div>
                                 <div id="timeline"></div>
-                                <div id="zoom">
-                                    <button onClick={() => waveSurfer.zoom(1)}>
-                                        {"1x"}
-                                    </button>
-                                    <button
-                                        onClick={() => waveSurfer.zoom(0.5)}
-                                    >
-                                        {"-"}
-                                    </button>
-                                    <button
-                                        onClick={() => waveSurfer.zoom(1.5)}
-                                    >
-                                        {"+"}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            waveSurfer.zoom(
-                                                waveSurfer.getMinZoom()
-                                            )
-                                        }
-                                    >
-                                        {"Fit"}
-                                    </button>
-                                </div>
                                 <button
                                     className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
                                     onClick={handlePlayPause}
                                 >
                                     {playing ? "Pause" : "Play"}
                                 </button>{" "}
+                                <input
+                                    type="range"
+                                    id="slider"
+                                    ref={sliderRef}
+                                    min="0.5"
+                                    max="100"
+                                    step="0.01"
+                                    defaultValue="1"
+                                />
                                 {/** AUDIO RECORDED PREVIEW */}
                                 <div className="container space-y-5 mt-5">
                                     <div className="flex items-center">

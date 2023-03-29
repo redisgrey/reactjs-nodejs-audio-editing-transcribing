@@ -71,7 +71,8 @@ export const handleFileChange = (
     setImportedAudioList,
     importedAudioList,
     setWaveSurfer,
-    setPlaying
+    setPlaying,
+    sliderRef
 ) => {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -101,6 +102,10 @@ export const handleFileChange = (
                     }),
                 ],
             });
+
+            sliderRef.current.oninput = function () {
+                waveSurfer.zoom(Number(this.value));
+            };
 
             // Load the audio buffer into WaveSurfer
             waveSurfer.loadDecodedBuffer(audioBuffer);
