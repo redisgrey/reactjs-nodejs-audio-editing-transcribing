@@ -86,6 +86,8 @@ function TrimMerge() {
 
     const sliderRef = useRef(null);
 
+    const [selectedRegion, setSelectedRegion] = useState(null);
+
     // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
         const savedTrimmedAudioList = localStorage.getItem("trimmedAudioList");
@@ -266,18 +268,29 @@ function TrimMerge() {
             importedAudioList,
             setWaveSurfer,
             setPlaying,
-            sliderRef
+            sliderRef,
+            setSelectedRegion
         );
+    };
+
+    const handlePlayRegion = () => {
+        if (selectedRegion) {
+            waveSurfer.play(selectedRegion.start, selectedRegion.end);
+            setPlaying(true);
+        }
     };
 
     const handlePlayPause = () => {
         if (waveSurfer) {
             if (playing) {
                 waveSurfer.pause();
+                setPlaying(false);
             } else {
-                waveSurfer.play();
+                if (selectedRegion) {
+                    waveSurfer.play(selectedRegion.start, selectedRegion.end);
+                    setPlaying(true);
+                }
             }
-            setPlaying(!playing);
         }
     };
 
@@ -345,6 +358,12 @@ function TrimMerge() {
                                 >
                                     {playing ? "Pause" : "Play"}
                                 </button>{" "}
+                                <button
+                                    className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                    onClick={handlePlayRegion}
+                                >
+                                    {playing ? "Pause Region" : "Play Region"}
+                                </button>
                                 <input
                                     type="range"
                                     id="slider"

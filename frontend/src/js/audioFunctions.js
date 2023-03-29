@@ -2,6 +2,8 @@ import WaveSurfer from "wavesurfer.js";
 
 import TimelinePlugin from "wavesurfer.js/dist/plugin/wavesurfer.timeline.min.js";
 
+import RegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions.min.js";
+
 //* RECORDING START BUTTON
 export const recordStart = (
     stream,
@@ -65,6 +67,17 @@ export const handleLabelClick = (inputRef) => {
     inputRef.current.click();
 };
 
+function getRandomColor() {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    const result = color + "80";
+    console.log("getRandomColor result:", result);
+    return result;
+}
+
 export const handleFileChange = (
     event,
     setAudioChunks,
@@ -72,7 +85,8 @@ export const handleFileChange = (
     importedAudioList,
     setWaveSurfer,
     setPlaying,
-    sliderRef
+    sliderRef,
+    setSelectedRegion
 ) => {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -96,9 +110,18 @@ export const handleFileChange = (
                 container: "#waveform",
                 waveColor: "violet",
                 progressColor: "purple",
+
                 plugins: [
                     TimelinePlugin.create({
                         container: "#timeline",
+                    }),
+                    RegionsPlugin.create({
+                        regionsMinLength: 2,
+                        dragSelection: {
+                            slop: 5,
+                        },
+                        // Use the color property to set the fill color of the region
+                        color: getRandomColor(),
                     }),
                 ],
             });
@@ -115,6 +138,7 @@ export const handleFileChange = (
 
             // Set initial playing state to false
             setPlaying(false);
+            setSelectedRegion(null);
         });
     };
     reader.readAsArrayBuffer(file);
