@@ -124,6 +124,22 @@ export const handleFileChange = (
                 ],
             });
 
+            // Add event listeners to the WaveSurfer instance
+            waveSurfer.on("region-created", (region) => {
+                console.log("Region created:", region);
+                // Perform any necessary processing or actions here
+            });
+
+            waveSurfer.on("region-updated", (region) => {
+                console.log("Region updated:", region);
+                // Perform any necessary processing or actions here
+            });
+
+            waveSurfer.on("region-removed", (region) => {
+                console.log("Region removed:", region);
+                // Perform any necessary processing or actions here
+            });
+
             sliderRef.current.oninput = function () {
                 waveSurfer.zoom(Number(this.value));
             };

@@ -86,6 +86,8 @@ function TrimMerge() {
 
     const sliderRef = useRef(null);
 
+    const [regions, setRegions] = useState([]);
+
     // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
         const savedTrimmedAudioList = localStorage.getItem("trimmedAudioList");
@@ -291,6 +293,26 @@ function TrimMerge() {
         waveSurfer.setVolume(Math.max(currentVolume - 0.1, 0));
     };
 
+    const handleRegionCreated = (region) => {
+        setRegions((prevRegions) => [...prevRegions, region]);
+    };
+
+    const handleRegionUpdated = (region) => {
+        setRegions((prevRegions) => {
+            const index = prevRegions.findIndex((r) => r.id === region.id);
+            if (index === -1) return prevRegions;
+            const updatedRegions = [...prevRegions];
+            updatedRegions[index] = region;
+            return updatedRegions;
+        });
+    };
+
+    const handleRegionRemoved = (region) => {
+        setRegions((prevRegions) =>
+            prevRegions.filter((r) => r.id !== region.id)
+        );
+    };
+
     return (
         <>
             {user ? (
@@ -364,6 +386,20 @@ function TrimMerge() {
                                 >
                                     Volume Down
                                 </button>
+                                <div>
+                                    {/* Render the list of regions */}
+                                    <ul>
+                                        {regions.map((region) => (
+                                            <li key={region.id}>
+                                                {region.start.toFixed(2)}
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    {/* Render the waveform and plugins */}
+                                    <div id="waveform"></div>
+                                    <div id="timeline"></div>
+                                </div>
                                 {/** AUDIO RECORDED PREVIEW */}
                                 <div className="container space-y-5 mt-5">
                                     <div className="flex items-center">
