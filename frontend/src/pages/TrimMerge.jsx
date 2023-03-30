@@ -88,6 +88,8 @@ function TrimMerge() {
 
     const [regions, setRegions] = useState([]);
 
+    const [currentRegion, setCurrentRegion] = useState(null);
+
     // * RENDERING THE TRIMMED AUDIO LIST FROM LOCALSTORAGE TO BROWSER
     useEffect(() => {
         const savedTrimmedAudioList = localStorage.getItem("trimmedAudioList");
@@ -268,7 +270,8 @@ function TrimMerge() {
             importedAudioList,
             setWaveSurfer,
             setPlaying,
-            sliderRef
+            sliderRef,
+            setRegions
         );
     };
 
@@ -293,34 +296,14 @@ function TrimMerge() {
         waveSurfer.setVolume(Math.max(currentVolume - 0.1, 0));
     };
 
-    const handleRegionCreated = (region) => {
-        setRegions((prevRegions) => [...prevRegions, region]);
-    };
-
-    const handleRegionUpdated = (region) => {
-        setRegions((prevRegions) => {
-            const index = prevRegions.findIndex((r) => r.id === region.id);
-            if (index === -1) return prevRegions;
-            const updatedRegions = [...prevRegions];
-            updatedRegions[index] = region;
-            return updatedRegions;
-        });
-    };
-
-    const handleRegionRemoved = (region) => {
-        setRegions((prevRegions) =>
-            prevRegions.filter((r) => r.id !== region.id)
-        );
-    };
-
     return (
         <>
             {user ? (
                 <>
                     {" "}
-                    <div className="font-[Poppins]">
+                    <div className="font-[Poppins] ">
                         <div className="container  p-10">
-                            <div className=" p-3 px-4 rounded-lg">
+                            <div className=" p-3 px-4 rounded-lg bg-gray-300">
                                 <div className="form-group w-[100%] m-auto flex justify-between text-center mt-3">
                                     <button
                                         id="recordBtn"
@@ -389,13 +372,57 @@ function TrimMerge() {
                                 <div>
                                     {/* Render the list of regions */}
                                     <ul>
-                                        {regions.map((region) => (
+                                        {regions.map((region, index) => (
                                             <li key={region.id}>
-                                                {region.start.toFixed(2)}
+                                                <div
+                                                    style={{
+                                                        backgroundColor:
+                                                            region.color,
+                                                        width: "50px",
+                                                        height: "20px",
+                                                        display: "inline-block",
+                                                        marginRight: "5px",
+                                                    }}
+                                                ></div>
+                                                <span>{region.label}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        if (currentRegion) {
+                                                            waveSurfer.pause();
+                                                        }
+                                                        waveSurfer.play(
+                                                            region.start,
+                                                            region.end
+                                                        );
+                                                        setCurrentRegion(
+                                                            region
+                                                        );
+                                                    }}
+                                                >
+                                                    Play
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (
+                                                            currentRegion &&
+                                                            currentRegion.id ===
+                                                                region.id
+                                                        ) {
+                                                            waveSurfer.pause();
+                                                            setCurrentRegion(
+                                                                null
+                                                            );
+                                                        }
+                                                        waveSurfer.regions.list[
+                                                            region.id
+                                                        ].remove();
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
                                             </li>
                                         ))}
                                     </ul>
-
                                     {/* Render the waveform and plugins */}
                                     <div id="waveform"></div>
                                     <div id="timeline"></div>

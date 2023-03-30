@@ -69,15 +69,16 @@ export const handleLabelClick = (inputRef) => {
 
 function getRandomColor() {
     const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    const result = color + "80";
-    console.log("getRandomColor result:", result);
-    return result;
+    return function () {
+        let color = "#";
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        const result = color + "80";
+        console.log("getRandomColor result:", result);
+        return result;
+    };
 }
-
 export const handleFileChange = (
     event,
     setAudioChunks,
@@ -85,7 +86,8 @@ export const handleFileChange = (
     importedAudioList,
     setWaveSurfer,
     setPlaying,
-    sliderRef
+    sliderRef,
+    setRegions
 ) => {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -114,28 +116,46 @@ export const handleFileChange = (
                         container: "#timeline",
                     }),
                     RegionsPlugin.create({
-                        regionsMinLength: 2,
+                        regionsMinLength: 0.5,
                         dragSelection: {
                             slop: 5,
                         },
                         // Use the color property to set the fill color of the region
-                        color: getRandomColor(),
+                        color: getRandomColor,
                     }),
                 ],
             });
 
             // Add event listeners to the WaveSurfer instance
             waveSurfer.on("region-created", (region) => {
+                setRegions((prevRegions) => [...prevRegions, region]);
                 console.log("Region created:", region);
+                region.update({ color: getRandomColor()() });
                 // Perform any necessary processing or actions here
             });
 
             waveSurfer.on("region-updated", (region) => {
+                // Stop playback if a region is currently playing
+                if (waveSurfer.isPlaying()) {
+                    waveSurfer.pause();
+                }
+                setRegions((prevRegions) => {
+                    const index = prevRegions.findIndex(
+                        (r) => r.id === region.id
+                    );
+                    if (index === -1) return prevRegions;
+                    const updatedRegions = [...prevRegions];
+                    updatedRegions[index] = region;
+                    return updatedRegions;
+                });
                 console.log("Region updated:", region);
                 // Perform any necessary processing or actions here
             });
 
             waveSurfer.on("region-removed", (region) => {
+                setRegions((prevRegions) =>
+                    prevRegions.filter((r) => r.id !== region.id)
+                );
                 console.log("Region removed:", region);
                 // Perform any necessary processing or actions here
             });
