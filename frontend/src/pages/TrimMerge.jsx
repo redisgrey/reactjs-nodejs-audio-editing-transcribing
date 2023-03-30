@@ -420,6 +420,129 @@ function TrimMerge() {
                                                 >
                                                     Delete
                                                 </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const cutFrom =
+                                                            region.start;
+                                                        const cutTo =
+                                                            region.end;
+                                                        const originalBuffer =
+                                                            waveSurfer.backend
+                                                                .buffer;
+                                                        const rate =
+                                                            originalBuffer.sampleRate;
+                                                        const originalDuration =
+                                                            originalBuffer.duration;
+                                                        const startOffset =
+                                                            parseInt(
+                                                                cutFrom * rate
+                                                            );
+                                                        const endOffset =
+                                                            parseInt(
+                                                                cutTo * rate
+                                                            );
+                                                        const leftBuffer =
+                                                            originalBuffer
+                                                                .getChannelData(
+                                                                    0
+                                                                )
+                                                                .slice(
+                                                                    0,
+                                                                    startOffset
+                                                                );
+                                                        const rightBuffer =
+                                                            originalBuffer
+                                                                .getChannelData(
+                                                                    1
+                                                                )
+                                                                .slice(
+                                                                    0,
+                                                                    startOffset
+                                                                );
+                                                        const newBuffer =
+                                                            waveSurfer.backend.ac.createBuffer(
+                                                                2,
+                                                                startOffset +
+                                                                    originalBuffer.length -
+                                                                    endOffset,
+                                                                rate
+                                                            );
+                                                        newBuffer
+                                                            .getChannelData(0)
+                                                            .set(leftBuffer);
+                                                        newBuffer
+                                                            .getChannelData(1)
+                                                            .set(rightBuffer);
+                                                        const leftEndBuffer =
+                                                            originalBuffer
+                                                                .getChannelData(
+                                                                    0
+                                                                )
+                                                                .slice(
+                                                                    endOffset
+                                                                );
+                                                        const rightEndBuffer =
+                                                            originalBuffer
+                                                                .getChannelData(
+                                                                    1
+                                                                )
+                                                                .slice(
+                                                                    endOffset
+                                                                );
+                                                        newBuffer
+                                                            .getChannelData(0)
+                                                            .set(
+                                                                leftEndBuffer,
+                                                                startOffset
+                                                            );
+                                                        newBuffer
+                                                            .getChannelData(1)
+                                                            .set(
+                                                                rightEndBuffer,
+                                                                startOffset
+                                                            );
+                                                        waveSurfer.backend.buffer =
+                                                            newBuffer;
+                                                        waveSurfer.drawBuffer();
+                                                        waveSurfer.clearRegions();
+                                                        regions.forEach(
+                                                            (reg) => {
+                                                                if (
+                                                                    reg.id ===
+                                                                    region.id
+                                                                )
+                                                                    return;
+                                                                const newStart =
+                                                                    reg.start >
+                                                                    cutTo
+                                                                        ? reg.start -
+                                                                          (cutTo -
+                                                                              cutFrom)
+                                                                        : reg.start;
+                                                                const newEnd =
+                                                                    reg.end >
+                                                                    cutTo
+                                                                        ? reg.end -
+                                                                          (cutTo -
+                                                                              cutFrom)
+                                                                        : reg.end;
+                                                                waveSurfer.addRegion(
+                                                                    {
+                                                                        id: reg.id,
+                                                                        start: newStart,
+                                                                        end: newEnd,
+                                                                        color: reg.color,
+                                                                        label: reg.label,
+                                                                        drag: false,
+                                                                        resize: false,
+                                                                    }
+                                                                );
+                                                            }
+                                                        );
+                                                    }}
+                                                >
+                                                    Cut
+                                                </button>
                                             </li>
                                         ))}
                                     </ul>
