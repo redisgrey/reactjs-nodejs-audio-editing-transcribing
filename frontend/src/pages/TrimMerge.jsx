@@ -2,7 +2,12 @@ import { useState, useRef, useEffect } from "react";
 
 import { useSelector } from "react-redux";
 
-import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
+import {
+    BsFillPlayFill,
+    BsFillStopFill,
+    BsDownload,
+    BsSignTurnRight,
+} from "react-icons/bs";
 
 import {
     recordStart,
@@ -187,10 +192,15 @@ function TrimMerge() {
         newBuffer.getChannelData(0).set(leftEndBuffer, startOffset);
         newBuffer.getChannelData(1).set(rightEndBuffer, startOffset);
         waveSurfer.backend.buffer = newBuffer;
+
+        // Remove the cut region from the list and the waveform
+        const index = regions.findIndex((reg) => reg.id === region.id);
+        regions.splice(index, 1);
+        waveSurfer.regions.list[region.id].remove();
+
         waveSurfer.drawBuffer();
         waveSurfer.clearRegions();
         regions.forEach((reg) => {
-            if (reg.id === region.id) return;
             const newStart =
                 reg.start > cutTo ? reg.start - (cutTo - cutFrom) : reg.start;
             const newEnd =
@@ -201,12 +211,11 @@ function TrimMerge() {
                 end: newEnd,
                 color: reg.color,
                 label: reg.label,
-                drag: false,
-                resize: false,
+                drag: true,
+                resize: true,
             });
         });
     };
-
     const handleUndo = () => {
         console.log("undo audioHistory: ", audioHistory);
         console.log("undo regionHistory: ", regionHistory);
