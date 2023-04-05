@@ -56,6 +56,8 @@ function TrimMerge() {
 
     const [canRedo, setCanRedo] = useState(false);
 
+    const lastClickTime = useRef(0);
+
     //* MICROPHONE ACCESS
     // let constraints = {
     //     audio: false,
@@ -217,8 +219,18 @@ function TrimMerge() {
         });
     };
     const handleUndo = () => {
-        console.log("undo audioHistory: ", audioHistory);
-        console.log("undo regionHistory: ", regionHistory);
+        const now = new Date().getTime();
+
+        // Check if the time elapsed since the last click is less than 2 seconds
+        if (now - lastClickTime.current < 2000) {
+            console.log("Too fast! Please wait before clicking undo again.");
+            return;
+        }
+
+        lastClickTime.current = now;
+
+        console.log("before undo audioHistory: ", audioHistory);
+        console.log("before undo regionHistory: ", regionHistory);
 
         // Check if there are any previous actions in the history arrays
         if (audioHistory.length < 1 || regionHistory.length < 1) return;
@@ -249,12 +261,26 @@ function TrimMerge() {
         redoRegionHistory.push(prevRegionState);
 
         setCanRedo(true);
+        console.log("after undo audioHistory: ", audioHistory);
+        console.log("after undo regionHistory: ", regionHistory);
     };
 
     const handleRedo = () => {
-        console.log("redo audioHistory: ", audioHistory);
-        console.log("redo regionHistory: ", regionHistory);
+        const now = new Date().getTime();
+
+        // Check if the time elapsed since the last click is less than 2 seconds
+        if (now - lastClickTime.current < 2000) {
+            console.log("Too fast! Please wait before clicking undo again.");
+            return;
+        }
+
+        lastClickTime.current = now;
+
+        console.log("before redo audioHistory: ", audioHistory);
+        console.log("before redo regionHistory: ", regionHistory);
+
         if (!canRedo) return;
+
         if (redoAudioHistory.length < 1 || redoRegionHistory.length < 1) return;
 
         // Restore the next state and actions
@@ -284,6 +310,9 @@ function TrimMerge() {
         regionHistory.push(nextRegionState);
 
         setCanRedo(redoAudioHistory.length > 0 && redoRegionHistory.length > 0);
+
+        console.log("after redo audioHistory: ", audioHistory);
+        console.log("after redo regionHistory: ", regionHistory);
     };
 
     return (
