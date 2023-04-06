@@ -59,23 +59,23 @@ function TrimMerge() {
     const lastClickTime = useRef(0);
 
     //* MICROPHONE ACCESS
-    // let constraints = {
-    //     audio: false,
-    //     video: false,
-    // };
+    let constraints = {
+        audio: true,
+        video: false,
+    };
 
-    // async function getMedia(constraints) {
-    //     try {
-    //         let streamData = await navigator.mediaDevices.getUserMedia(
-    //             constraints
-    //         );
-    //         setStream(streamData);
-    //     } catch (err) {
-    //         console.log(err);
-    //     }
-    // }
+    async function getMedia(constraints) {
+        try {
+            let streamData = await navigator.mediaDevices.getUserMedia(
+                constraints
+            );
+            setStream(streamData);
+        } catch (err) {
+            console.log(err);
+        }
+    }
 
-    // getMedia(constraints);
+    getMedia(constraints);
 
     //* RECORDING START BUTTON
     const startRecording = () => {
@@ -95,7 +95,11 @@ function TrimMerge() {
             setIsRecording,
             audioChunks,
             setAudioURL,
-            mimeType
+            mimeType,
+            setWaveSurfer,
+            setPlaying,
+            sliderRef,
+            setRegions
         );
     };
 
@@ -174,12 +178,19 @@ function TrimMerge() {
         const originalDuration = originalBuffer.duration;
         const startOffset = parseInt(cutFrom * rate);
         const endOffset = parseInt(cutTo * rate);
+        // const leftBuffer = originalBuffer
+        //     .getChannelData(0)
+        //     .slice(0, startOffset);
+        // const rightBuffer = originalBuffer
+        //     .getChannelData(1)
+        //     .slice(0, startOffset);
         const leftBuffer = originalBuffer
             .getChannelData(0)
             .slice(0, startOffset);
-        const rightBuffer = originalBuffer
-            .getChannelData(1)
-            .slice(0, startOffset);
+        const rightBuffer =
+            originalBuffer.numberOfChannels > 1
+                ? originalBuffer.getChannelData(1).slice(0, startOffset)
+                : new Float32Array(leftBuffer.length).fill(0);
         const newBuffer = waveSurfer.backend.ac.createBuffer(
             2,
             startOffset + originalBuffer.length - endOffset,
@@ -187,10 +198,15 @@ function TrimMerge() {
         );
         newBuffer.getChannelData(0).set(leftBuffer);
         newBuffer.getChannelData(1).set(rightBuffer);
+        // const leftEndBuffer = originalBuffer.getChannelData(0).slice(endOffset);
+        // const rightEndBuffer = originalBuffer
+        //     .getChannelData(1)
+        //     .slice(endOffset);
         const leftEndBuffer = originalBuffer.getChannelData(0).slice(endOffset);
-        const rightEndBuffer = originalBuffer
-            .getChannelData(1)
-            .slice(endOffset);
+        const rightEndBuffer =
+            originalBuffer.numberOfChannels > 1
+                ? originalBuffer.getChannelData(1).slice(endOffset)
+                : new Float32Array(leftEndBuffer.length).fill(0);
         newBuffer.getChannelData(0).set(leftEndBuffer, startOffset);
         newBuffer.getChannelData(1).set(rightEndBuffer, startOffset);
         waveSurfer.backend.buffer = newBuffer;
