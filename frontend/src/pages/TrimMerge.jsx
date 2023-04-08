@@ -58,6 +58,8 @@ function TrimMerge() {
 
     const lastClickTime = useRef(0);
 
+    const [showReplaceOptions, setShowReplaceOptions] = useState(false);
+
     //* MICROPHONE ACCESS
     let constraints = {
         audio: true,
@@ -178,12 +180,7 @@ function TrimMerge() {
         const originalDuration = originalBuffer.duration;
         const startOffset = parseInt(cutFrom * rate);
         const endOffset = parseInt(cutTo * rate);
-        // const leftBuffer = originalBuffer
-        //     .getChannelData(0)
-        //     .slice(0, startOffset);
-        // const rightBuffer = originalBuffer
-        //     .getChannelData(1)
-        //     .slice(0, startOffset);
+
         const leftBuffer = originalBuffer
             .getChannelData(0)
             .slice(0, startOffset);
@@ -198,10 +195,7 @@ function TrimMerge() {
         );
         newBuffer.getChannelData(0).set(leftBuffer);
         newBuffer.getChannelData(1).set(rightBuffer);
-        // const leftEndBuffer = originalBuffer.getChannelData(0).slice(endOffset);
-        // const rightEndBuffer = originalBuffer
-        //     .getChannelData(1)
-        //     .slice(endOffset);
+
         const leftEndBuffer = originalBuffer.getChannelData(0).slice(endOffset);
         const rightEndBuffer =
             originalBuffer.numberOfChannels > 1
@@ -234,6 +228,23 @@ function TrimMerge() {
             });
         });
     };
+
+    const handleReplaceButtonClick = () => {
+        setShowReplaceOptions(true);
+    };
+
+    const handleCancelReplace = () => {
+        setShowReplaceOptions(false);
+    };
+
+    const handleRecord = (region) => {
+        // logic for recording new audio to replace the selected region
+    };
+
+    const handleImport = (region) => {
+        // logic for importing new audio to replace the selected region
+    };
+
     const handleUndo = () => {
         const now = new Date().getTime();
 
@@ -460,6 +471,43 @@ function TrimMerge() {
                                                 >
                                                     Cut
                                                 </button>
+
+                                                <button
+                                                    onClick={() =>
+                                                        handleReplaceButtonClick()
+                                                    }
+                                                >
+                                                    Replace
+                                                </button>
+                                                {showReplaceOptions && (
+                                                    <div>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleRecord(
+                                                                    region
+                                                                )
+                                                            }
+                                                        >
+                                                            Record
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleImport(
+                                                                    region
+                                                                )
+                                                            }
+                                                        >
+                                                            Import
+                                                        </button>
+                                                        <button
+                                                            onClick={
+                                                                handleCancelReplace
+                                                            }
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>
