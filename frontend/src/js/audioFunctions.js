@@ -10,11 +10,14 @@ export const recordStart = (
     setIsRecording,
     mediaRecorder,
     setAudioChunks,
+    audioChunks,
     mimeType
 ) => {
     setIsRecording(true);
 
     const media = new MediaRecorder(stream, { type: mimeType });
+
+    console.log("media: ", media);
 
     mediaRecorder.current = media;
 
@@ -30,7 +33,11 @@ export const recordStart = (
         localAudioChunks.push(event.data);
     };
 
+    console.log("localAudioChunks: ", localAudioChunks);
+
     setAudioChunks(localAudioChunks);
+
+    console.log("audioChunks: ", audioChunks);
 
     console.log("recording start");
 };

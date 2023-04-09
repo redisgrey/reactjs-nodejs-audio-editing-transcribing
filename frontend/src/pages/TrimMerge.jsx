@@ -22,8 +22,6 @@ const mimeType = "audio/mpeg";
 
 const audioHistory = [];
 const regionHistory = [];
-const redoAudioHistory = [];
-const redoRegionHistory = [];
 
 function TrimMerge() {
     const { user } = useSelector((state) => state.auth);
@@ -54,11 +52,13 @@ function TrimMerge() {
 
     const [currentRegion, setCurrentRegion] = useState(null);
 
-    const [canRedo, setCanRedo] = useState(false);
-
-    const lastClickTime = useRef(0);
+    const replaceMediaRecorder = useRef(null);
 
     const [showReplaceOptions, setShowReplaceOptions] = useState(false);
+
+    const [isReplaceRecording, setIsReplaceRecording] = useState(false);
+
+    const [replaceAudioChunks, setReplaceAudioChunks] = useState([]);
 
     //* MICROPHONE ACCESS
     let constraints = {
@@ -237,109 +237,117 @@ function TrimMerge() {
         setShowReplaceOptions(false);
     };
 
-    const handleRecord = (region) => {
-        // logic for recording new audio to replace the selected region
+    const handleRecord = (
+        region,
+        replaceMediaRecorder,
+        setReplaceAudioChunks,
+        waveSurfer
+    ) => {
+        setIsReplaceRecording(true);
+        console.log("stream: ", stream);
+        console.log("mimeType: ", mimeType);
+        const media = new MediaRecorder(stream, { type: mimeType });
+        console.log("media: ", media);
+
+        replaceMediaRecorder.current = media;
+
+        replaceMediaRecorder.current.start();
+
+        let localAudioChunks = [];
+
+        replaceMediaRecorder.current.ondataavailable = (event) => {
+            if (typeof event.data === "undefined") return;
+            if (event.data.size === 0) return;
+
+            localAudioChunks.push(event.data);
+        };
+
+        setReplaceAudioChunks(localAudioChunks);
+
+        console.log("replace replaceAudioChunks: ", replaceAudioChunks);
+
+        console.log("replace recording start");
+    };
+    function getRandomColor() {
+        const letters = "0123456789ABCDEF";
+        return function () {
+            let color = "#";
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            const result = color + "80";
+            // console.log("getRandomColor result:", result);
+            return result;
+        };
+    }
+
+    const handleRecordStop = (region, waveSurfer) => {
+        setIsReplaceRecording(false);
+
+        replaceMediaRecorder.current.stop();
+
+        replaceMediaRecorder.current.onstop = () => {
+            const audioBlob = new Blob(replaceAudioChunks, { type: mimeType });
+            console.log("replace audioBlob: ", audioBlob);
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const arrayBuffer = event.target.result;
+                console.log("replace arrayBuffer: ", arrayBuffer);
+                const audioContext = new AudioContext();
+                audioContext.decodeAudioData(
+                    arrayBuffer,
+                    (audioBuffer) => {
+                        const audio = {
+                            name: "Recorded Audio",
+                            url: URL.createObjectURL(audioBlob),
+                            buffer: audioBuffer,
+                        };
+
+                        console.log("audioBuffer: ", audioBuffer);
+
+                        // Get the start and end time of the selected region
+                        const start = region.start;
+                        const end = region.end;
+
+                        // Remove the selected region from the waveform
+                        region.remove();
+
+                        // Add the recorded audio as a new region at the same start time
+                        console.log("waveSurfer: ", waveSurfer);
+                        const newRegion = waveSurfer.regions.add({
+                            start: start,
+                            end: start + audioBuffer.duration,
+                            color: getRandomColor(),
+                        });
+
+                        console.log("newRegion: ", newRegion);
+                        // Set the audio buffer of the new region to the recorded audio buffer
+                        newRegion.update({
+                            data: audioBuffer,
+                        });
+
+                        console.log("newRegion update: ", newRegion);
+
+                        // Set initial playing state to false
+                        setPlaying(false);
+                    },
+                    (error) => {
+                        console.error("Error decoding audio data", error);
+                    }
+                );
+            };
+
+            reader.readAsArrayBuffer(audioBlob);
+
+            setAudioURL(URL.createObjectURL(audioBlob));
+        };
+
+        console.log("replace recording stop");
     };
 
     const handleImport = (region) => {
         // logic for importing new audio to replace the selected region
-    };
-
-    const handleUndo = () => {
-        const now = new Date().getTime();
-
-        // Check if the time elapsed since the last click is less than 2 seconds
-        if (now - lastClickTime.current < 2000) {
-            console.log("Too fast! Please wait before clicking undo again.");
-            return;
-        }
-
-        lastClickTime.current = now;
-
-        console.log("before undo audioHistory: ", audioHistory);
-        console.log("before undo regionHistory: ", regionHistory);
-
-        // Check if there are any previous actions in the history arrays
-        if (audioHistory.length < 1 || regionHistory.length < 1) return;
-
-        // Restore the previous state and actions
-        const prevAudioState = audioHistory.pop();
-        const prevAudioFloat32Array = new Float32Array(prevAudioState);
-        const prevRegionState = regionHistory.pop();
-
-        waveSurfer.backend.buffer.copyToChannel(prevAudioFloat32Array, 0);
-
-        // Remove all existing regions on the waveform
-        waveSurfer.clearRegions();
-
-        // Add the previous regions to the waveform
-        prevRegionState.forEach((region, index) => {
-            const prevColor = prevRegionState[index].color;
-            const newRegion = waveSurfer.addRegion(region);
-            newRegion.update({
-                color: prevColor,
-            });
-        });
-        // Update the state with the previous region state
-        setRegions(prevRegionState);
-
-        // Add the previous state and actions to redo history
-        redoAudioHistory.push(prevAudioState);
-        redoRegionHistory.push(prevRegionState);
-
-        setCanRedo(true);
-        console.log("after undo audioHistory: ", audioHistory);
-        console.log("after undo regionHistory: ", regionHistory);
-    };
-
-    const handleRedo = () => {
-        const now = new Date().getTime();
-
-        // Check if the time elapsed since the last click is less than 2 seconds
-        if (now - lastClickTime.current < 2000) {
-            console.log("Too fast! Please wait before clicking undo again.");
-            return;
-        }
-
-        lastClickTime.current = now;
-
-        console.log("before redo audioHistory: ", audioHistory);
-        console.log("before redo regionHistory: ", regionHistory);
-
-        if (!canRedo) return;
-
-        if (redoAudioHistory.length < 1 || redoRegionHistory.length < 1) return;
-
-        // Restore the next state and actions
-        const nextAudioState = redoAudioHistory.pop();
-        const nextAudioFloat32Array = new Float32Array(nextAudioState);
-        const nextRegionState = redoRegionHistory.pop();
-
-        waveSurfer.backend.buffer.copyToChannel(nextAudioFloat32Array, 0);
-
-        // Remove all existing regions on the waveform
-        waveSurfer.clearRegions();
-
-        // Add the next regions to the waveform
-        nextRegionState.forEach((region, index) => {
-            const nextColor = nextRegionState[index].color;
-            const newRegion = waveSurfer.addRegion(region);
-            newRegion.update({
-                color: nextColor,
-            });
-        });
-
-        // Update the state with the next region state
-        setRegions(nextRegionState);
-
-        // Add the current state and actions to undo history
-        audioHistory.push(nextAudioState);
-        regionHistory.push(nextRegionState);
-
-        setCanRedo(redoAudioHistory.length > 0 && redoRegionHistory.length > 0);
-
-        console.log("after redo audioHistory: ", audioHistory);
-        console.log("after redo regionHistory: ", regionHistory);
     };
 
     return (
@@ -416,23 +424,6 @@ function TrimMerge() {
                                     Volume Down
                                 </button>
                                 <div>
-                                    <div className="flex">
-                                        <button
-                                            className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
-                                            onClick={() => handleUndo()}
-                                            disabled={audioHistory.length === 0}
-                                        >
-                                            Undo
-                                        </button>
-                                        <button
-                                            className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
-                                            onClick={() => handleRedo()}
-                                            disabled={!canRedo}
-                                        >
-                                            Redo
-                                        </button>
-                                    </div>
-
                                     {/* Render the list of regions */}
                                     <ul>
                                         {regions.map((region, index) => (
@@ -484,21 +475,39 @@ function TrimMerge() {
                                                         <button
                                                             onClick={() =>
                                                                 handleRecord(
-                                                                    region
+                                                                    region,
+                                                                    replaceMediaRecorder,
+                                                                    setReplaceAudioChunks
                                                                 )
                                                             }
                                                         >
                                                             Record
                                                         </button>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleImport(
-                                                                    region
-                                                                )
-                                                            }
-                                                        >
-                                                            Import
-                                                        </button>
+                                                        {isReplaceRecording ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleRecordStop(
+                                                                            region,
+                                                                            waveSurfer
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Stop
+                                                                    Recording
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleImport(
+                                                                        region
+                                                                    )
+                                                                }
+                                                            >
+                                                                Import
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={
                                                                 handleCancelReplace
