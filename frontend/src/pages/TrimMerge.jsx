@@ -306,31 +306,36 @@ function TrimMerge() {
 
                         console.log("audioBuffer: ", audioBuffer);
 
+                        // Create a new audio buffer for the replaced audio
+                        const newAudioBuffer = audioContext.createBuffer(
+                            audioBuffer.numberOfChannels,
+                            audioBuffer.length,
+                            audioBuffer.sampleRate
+                        );
+
+                        // Copy the channel data from the recorded audio buffer to the new audio buffer
+                        for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                            newAudioBuffer
+                                .getChannelData(i)
+                                .set(audioBuffer.getChannelData(i));
+                        }
+
                         // Get the start and end time of the selected region
                         const start = region.start;
                         const end = region.end;
 
-                        // Remove the selected region from the waveform
-                        region.remove();
-
-                        // Add the recorded audio as a new region at the same start time
-                        console.log("waveSurfer: ", waveSurfer);
-                        const newRegion = waveSurfer.regions.add({
-                            start: start,
-                            end: start + audioBuffer.duration,
-                            color: getRandomColor(),
-                        });
-
-                        console.log("newRegion: ", newRegion);
-                        // Set the audio buffer of the new region to the recorded audio buffer
-                        newRegion.update({
-                            data: audioBuffer,
-                        });
-
-                        console.log("newRegion update: ", newRegion);
-
-                        // Set initial playing state to false
-                        setPlaying(false);
+                        // Load the new audio buffer to the selected region
+                        waveSurfer.loadDecodedBuffer(
+                            newAudioBuffer,
+                            (newWaveform) => {
+                                console.log(
+                                    "New waveform with replaced audio data: ",
+                                    newWaveform
+                                );
+                                // Set initial playing state to false
+                                setPlaying(false);
+                            }
+                        );
                     },
                     (error) => {
                         console.error("Error decoding audio data", error);
@@ -339,8 +344,6 @@ function TrimMerge() {
             };
 
             reader.readAsArrayBuffer(audioBlob);
-
-            setAudioURL(URL.createObjectURL(audioBlob));
         };
 
         console.log("replace recording stop");
@@ -520,6 +523,7 @@ function TrimMerge() {
                                             </li>
                                         ))}
                                     </ul>
+                                    <audio src={audioURL} controls></audio>
                                 </div>
                             </div>
                         </div>
