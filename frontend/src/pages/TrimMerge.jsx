@@ -176,6 +176,7 @@ function TrimMerge() {
                     // Restore original buffer
                     const originalBuffer = lastAction.originalBuffer;
                     console.log("undo cut originalBuffer: ", originalBuffer);
+                    waveSurfer.backend.buffer = originalBuffer;
 
                     const newBuffer = waveSurfer.backend.ac.createBuffer(
                         originalBuffer.numberOfChannels,
@@ -255,9 +256,9 @@ function TrimMerge() {
                     waveSurfer.backend.buffer = newBuffer;
 
                     // Add cut region back to WaveSurfer and update regions list
-                    waveSurfer.addRegion(cutRegion);
+                    waveSurfer.addRegion(lastAction.region);
                     const newRegions = regions
-                        .concat([cutRegion])
+                        .concat([lastAction.region])
                         .sort((a, b) => a.start - b.start);
                     setRegions(
                         newRegions.map((region) => ({
@@ -267,7 +268,7 @@ function TrimMerge() {
                     );
 
                     // Restore original color of region
-                    waveSurfer.regions.list[cutRegion.id].update({
+                    waveSurfer.regions.list[lastAction.region.id].update({
                         color: lastAction.color,
                     });
 
@@ -314,11 +315,11 @@ function TrimMerge() {
                     regions.splice(index, 1);
                     waveSurfer.regions.list[lastAction.region.id].remove();
                     break;
-                case "CUT_REGION":
-                    // Remove cut region
-                    const cutRegion = lastAction.region;
-                    waveSurfer.regions.list[cutRegion.id].remove();
-                    break;
+                // case "CUT_REGION":
+                //     // Remove cut region
+                //     const cutRegion = lastAction.region;
+                //     waveSurfer.regions.list[cutRegion.id].remove();
+                //     break;
                 case "REPLACE_REGION":
                     // Replace region with old region
                     const oldRegion = lastAction.oldRegion;
