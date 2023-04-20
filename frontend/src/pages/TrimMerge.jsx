@@ -20,9 +20,6 @@ import NotFound from "./NotFound";
 
 const mimeType = "audio/mpeg";
 
-const audioHistory = [];
-const regionHistory = [];
-
 function TrimMerge() {
     const { user } = useSelector((state) => state.auth);
 
@@ -52,32 +49,29 @@ function TrimMerge() {
 
     const [currentRegion, setCurrentRegion] = useState(null);
 
-    const replaceMediaRecorder = useRef(null);
+    const [isReplacing, setIsReplacing] = useState(false);
 
-    const [showReplaceOptions, setShowReplaceOptions] = useState(false);
-
-    const [isReplaceRecording, setIsReplaceRecording] = useState(false);
-
-    const [replaceAudioChunks, setReplaceAudioChunks] = useState([]);
+    const [undoActions, setUndoActions] = useState([]);
+    const [redoActions, setRedoActions] = useState([]);
 
     //* MICROPHONE ACCESS
-    let constraints = {
-        audio: true,
-        video: false,
-    };
+    // let constraints = {
+    //     audio: true,
+    //     video: false,
+    // };
 
-    async function getMedia(constraints) {
-        try {
-            let streamData = await navigator.mediaDevices.getUserMedia(
-                constraints
-            );
-            setStream(streamData);
-        } catch (err) {
-            console.log(err);
-        }
-    }
+    // async function getMedia(constraints) {
+    //     try {
+    //         let streamData = await navigator.mediaDevices.getUserMedia(
+    //             constraints
+    //         );
+    //         setStream(streamData);
+    //     } catch (err) {
+    //         console.log(err);
+    //     }
+    // }
 
-    getMedia(constraints);
+    // getMedia(constraints);
 
     //* RECORDING START BUTTON
     const startRecording = () => {
@@ -152,27 +146,200 @@ function TrimMerge() {
         setCurrentRegion(region);
     };
 
+    const undo = () => {
+        if (undoActions.length > 0) {
+            const lastAction = undoActions.pop();
+            redoActions.push(lastAction);
+
+            switch (lastAction.type) {
+                case "DELETE_REGION":
+                    // Add back deleted region
+                    regions.splice(lastAction.index, 0, lastAction.region);
+                    waveSurfer.addRegion(lastAction.region);
+
+                    // Restore original color of region
+                    waveSurfer.regions.list[lastAction.region.id].update({
+                        color: lastAction.color,
+                    });
+
+                    // Update keys for regions list
+                    setRegions(
+                        regions.map((region) => ({ ...region, key: region.id }))
+                    );
+                    break;
+                case "CUT_REGION":
+                    // Calculate the duration of the cut region
+                    const originalDuration =
+                        lastAction.region.end - lastAction.region.start;
+
+                    // Add the original duration to the lastAction object
+                    lastAction.originalDuration = originalDuration;
+                    // Restore original buffer
+                    const originalBuffer = waveSurfer.backend.buffer;
+                    console.log("undo cut originalBuffer: ", originalBuffer);
+
+                    const newBuffer = waveSurfer.backend.ac.createBuffer(
+                        originalBuffer.numberOfChannels,
+                        originalBuffer.length,
+                        originalBuffer.sampleRate
+                    );
+                    const leftChannel = originalBuffer.getChannelData(0);
+                    const rightChannel =
+                        originalBuffer.numberOfChannels > 1
+                            ? originalBuffer.getChannelData(1)
+                            : new Float32Array(leftChannel.length).fill(0);
+                    console.log("undo cut leftChannel: ", leftChannel);
+                    console.log("undo cut rightChannel: ", rightChannel);
+                    const maxDataLength = Math.min(
+                        leftChannel.length,
+                        newBuffer.getChannelData(0).length
+                    );
+                    newBuffer
+                        .getChannelData(0)
+                        .set(leftChannel.subarray(0, maxDataLength));
+                    newBuffer
+                        .getChannelData(1)
+                        .set(rightChannel.subarray(0, maxDataLength));
+                    console.log(
+                        "undo cut newBuffer getChannelData(0): ",
+                        newBuffer.getChannelData(0)
+                    );
+                    console.log(
+                        "undo cut newBuffer getChannelData(1): ",
+                        newBuffer.getChannelData(1)
+                    );
+
+                    // Restore cut region
+                    regions.splice(lastAction.index, 1);
+                    const cutRegion = lastAction.region;
+                    console.log("undo cut cutRegion: ", cutRegion);
+                    const startOffset = parseInt(
+                        cutRegion.start * originalBuffer.sampleRate
+                    );
+                    const endOffset = parseInt(
+                        cutRegion.end * originalBuffer.sampleRate
+                    );
+                    console.log("undo cut startOffset: ", startOffset);
+                    console.log("undo cut endoffset: ", endOffset);
+                    const leftCutBuffer = originalBuffer
+                        .getChannelData(0)
+                        .slice(startOffset, endOffset);
+                    const rightCutBuffer =
+                        originalBuffer.numberOfChannels > 1
+                            ? originalBuffer
+                                  .getChannelData(1)
+                                  .slice(startOffset, endOffset)
+                            : new Float32Array(leftCutBuffer.length).fill(0);
+                    console.log("undo cut leftCutBuffer: ", leftCutBuffer);
+                    console.log("undo cut rightCutBuffer: ", rightCutBuffer);
+                    try {
+                        newBuffer
+                            .getChannelData(0)
+                            .set(leftCutBuffer, startOffset);
+                        newBuffer
+                            .getChannelData(1)
+                            .set(rightCutBuffer, startOffset);
+                    } catch (e) {
+                        console.log("Error: ", e);
+                        console.log(
+                            "leftCutBuffer length: ",
+                            leftCutBuffer.length
+                        );
+                        console.log(
+                            "rightCutBuffer length: ",
+                            rightCutBuffer.length
+                        );
+                        console.log("startOffset: ", startOffset);
+                        console.log("endOffset: ", endOffset);
+                    }
+                    waveSurfer.backend.buffer = newBuffer;
+                    waveSurfer.addRegion(cutRegion);
+                    // Restore original color of region
+                    waveSurfer.regions.list[cutRegion.id].update({
+                        color: lastAction.color,
+                    });
+
+                    // Update keys for regions list
+                    setRegions(
+                        regions.map((region) => ({ ...region, key: region.id }))
+                    );
+                    break;
+                case "REPLACE_REGION":
+                    // Replace region with original
+                    const index = regions.findIndex(
+                        (reg) => reg.id === lastAction.region.id
+                    );
+                    regions.splice(index, 1, lastAction.originalRegion);
+                    waveSurfer.regions.list[lastAction.region.id].update(
+                        lastAction.originalRegion
+                    );
+
+                    // Restore original color of region
+                    waveSurfer.regions.list[
+                        lastAction.originalRegion.id
+                    ].update({
+                        color: lastAction.color,
+                    });
+
+                    // Update keys for regions list
+                    setRegions(
+                        regions.map((region) => ({ ...region, key: region.id }))
+                    );
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    const redo = () => {
+        if (redoActions.length > 0) {
+            const lastAction = redoActions.pop();
+
+            switch (lastAction.type) {
+                case "DELETE_REGION":
+                    // Remove deleted region
+                    const index = regions.findIndex(
+                        (reg) => reg.id === lastAction.region.id
+                    );
+                    regions.splice(index, 1);
+                    waveSurfer.regions.list[lastAction.region.id].remove();
+                    break;
+                case "CUT_REGION":
+                    // Remove cut region
+                    const cutRegion = lastAction.region;
+                    waveSurfer.regions.list[cutRegion.id].remove();
+                    break;
+                case "REPLACE_REGION":
+                    // Replace region with old region
+                    const oldRegion = lastAction.oldRegion;
+                    const newRegion = lastAction.newRegion;
+                    regions.splice(regions.indexOf(newRegion), 1, oldRegion);
+                    waveSurfer.regions.list[newRegion.id].update(oldRegion);
+                    break;
+                default:
+                    break;
+            }
+
+            undoActions.push(lastAction);
+        }
+    };
+
     const handleDeleteRegion = async (region) => {
-        // Store the current state in the history arrays
-        audioHistory.push(waveSurfer.backend.buffer.getChannelData(0).slice());
-        regionHistory.push([...regions]);
-        console.log("delete audioHistory: ", audioHistory);
-        console.log("delete regionHistory: ", regionHistory);
+        // Store original color of deleted region
+        const originalColor = region.color;
+
         if (currentRegion && currentRegion.id === region.id) {
             waveSurfer.pause();
             setCurrentRegion(null);
         }
         await waveSurfer.regions.list[region.id].remove();
+        // Add delete action to undoActions array
+        const action = { type: "DELETE_REGION", region, color: originalColor };
+        setUndoActions([...undoActions, action]);
     };
 
     const handleCutRegion = (region) => {
-        // Store the current state in the history arrays
-        audioHistory.push(waveSurfer.backend.buffer.getChannelData(0).slice());
-        regionHistory.push([...regions]);
-
-        console.log("cut audioHistory: ", audioHistory);
-        console.log("cut regionHistory: ", regionHistory);
-
         const cutFrom = region.start;
         const cutTo = region.end;
         const originalBuffer = waveSurfer.backend.buffer;
@@ -227,130 +394,137 @@ function TrimMerge() {
                 resize: true,
             });
         });
+
+        // Add cut action to undoActions array
+        const action = { type: "CUT_REGION", region };
+        setUndoActions([...undoActions, action]);
     };
 
-    const handleReplaceButtonClick = () => {
-        setShowReplaceOptions(true);
+    const handleReplaceFunction = () => {
+        setIsReplacing(true);
     };
 
-    const handleCancelReplace = () => {
-        setShowReplaceOptions(false);
-    };
+    const handleReplaceImportFunction = (region) => {
+        const replaceFrom = region.start;
+        const replaceTo = region.end;
+        const originalBuffer = waveSurfer.backend.buffer;
+        const rate = originalBuffer.sampleRate;
+        const originalDuration = originalBuffer.duration;
+        const startOffset = parseInt(replaceFrom * rate);
+        const endOffset = parseInt(replaceTo * rate);
 
-    const handleRecord = (
-        region,
-        replaceMediaRecorder,
-        setReplaceAudioChunks,
-        waveSurfer
-    ) => {
-        setIsReplaceRecording(true);
-        console.log("stream: ", stream);
-        console.log("mimeType: ", mimeType);
-        const media = new MediaRecorder(stream, { type: mimeType });
-        console.log("media: ", media);
+        const leftBuffer = originalBuffer
+            .getChannelData(0)
+            .slice(0, startOffset);
+        const rightBuffer =
+            originalBuffer.numberOfChannels > 1
+                ? originalBuffer.getChannelData(1).slice(0, startOffset)
+                : new Float32Array(leftBuffer.length).fill(0);
 
-        replaceMediaRecorder.current = media;
-
-        replaceMediaRecorder.current.start();
-
-        let localAudioChunks = [];
-
-        replaceMediaRecorder.current.ondataavailable = (event) => {
-            if (typeof event.data === "undefined") return;
-            if (event.data.size === 0) return;
-
-            localAudioChunks.push(event.data);
-        };
-
-        setReplaceAudioChunks(localAudioChunks);
-
-        console.log("replace replaceAudioChunks: ", replaceAudioChunks);
-
-        console.log("replace recording start");
-    };
-    function getRandomColor() {
-        const letters = "0123456789ABCDEF";
-        return function () {
-            let color = "#";
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            const result = color + "80";
-            // console.log("getRandomColor result:", result);
-            return result;
-        };
-    }
-
-    const handleRecordStop = (region, waveSurfer) => {
-        setIsReplaceRecording(false);
-
-        replaceMediaRecorder.current.stop();
-
-        replaceMediaRecorder.current.onstop = () => {
-            const audioBlob = new Blob(replaceAudioChunks, { type: mimeType });
-            console.log("replace audioBlob: ", audioBlob);
-
+        // Create an input element to select the file
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "audio/*";
+        fileInput.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            // Use FileReader API to read contents of imported file
             const reader = new FileReader();
             reader.onload = (event) => {
-                const arrayBuffer = event.target.result;
-                console.log("replace arrayBuffer: ", arrayBuffer);
-                const audioContext = new AudioContext();
-                audioContext.decodeAudioData(
-                    arrayBuffer,
-                    (audioBuffer) => {
-                        const audio = {
-                            name: "Recorded Audio",
-                            url: URL.createObjectURL(audioBlob),
-                            buffer: audioBuffer,
-                        };
+                const importedAudio = event.target.result;
+                // Decode the imported audio and get its channel data
+                waveSurfer.backend.ac.decodeAudioData(
+                    importedAudio,
+                    (importedBuffer) => {
+                        const importedLeftBuffer =
+                            importedBuffer.getChannelData(0);
+                        const importedRightBuffer =
+                            importedBuffer.numberOfChannels > 1
+                                ? importedBuffer.getChannelData(1)
+                                : new Float32Array(
+                                      importedLeftBuffer.length
+                                  ).fill(0);
 
-                        console.log("audioBuffer: ", audioBuffer);
+                        const leftEndBuffer = originalBuffer
+                            .getChannelData(0)
+                            .slice(endOffset);
+                        const rightEndBuffer =
+                            originalBuffer.numberOfChannels > 1
+                                ? originalBuffer
+                                      .getChannelData(1)
+                                      .slice(endOffset)
+                                : new Float32Array(leftEndBuffer.length).fill(
+                                      0
+                                  );
 
-                        // Create a new audio buffer for the replaced audio
-                        const newAudioBuffer = audioContext.createBuffer(
-                            audioBuffer.numberOfChannels,
-                            audioBuffer.length,
-                            audioBuffer.sampleRate
+                        // Create new buffer with contents of both audio before and after the selected region, as well as the imported audio
+                        const newBuffer = waveSurfer.backend.ac.createBuffer(
+                            2,
+                            startOffset +
+                                importedLeftBuffer.length +
+                                leftEndBuffer.length,
+                            rate
                         );
+                        newBuffer.getChannelData(0).set(leftBuffer);
+                        newBuffer.getChannelData(1).set(rightBuffer);
+                        newBuffer
+                            .getChannelData(0)
+                            .set(importedLeftBuffer, startOffset);
+                        newBuffer
+                            .getChannelData(1)
+                            .set(importedRightBuffer, startOffset);
+                        newBuffer
+                            .getChannelData(0)
+                            .set(
+                                leftEndBuffer,
+                                startOffset + importedLeftBuffer.length
+                            );
 
-                        // Copy the channel data from the recorded audio buffer to the new audio buffer
-                        for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
-                            newAudioBuffer
-                                .getChannelData(i)
-                                .set(audioBuffer.getChannelData(i));
-                        }
+                        waveSurfer.backend.buffer = newBuffer;
 
-                        // Get the start and end time of the selected region
-                        const start = region.start;
-                        const end = region.end;
-
-                        // Load the new audio buffer to the selected region
-                        waveSurfer.loadDecodedBuffer(
-                            newAudioBuffer,
-                            (newWaveform) => {
-                                console.log(
-                                    "New waveform with replaced audio data: ",
-                                    newWaveform
-                                );
-                                // Set initial playing state to false
-                                setPlaying(false);
-                            }
+                        // Remove the replaced region from the list and the waveform
+                        const index = regions.findIndex(
+                            (reg) => reg.id === region.id
                         );
-                    },
-                    (error) => {
-                        console.error("Error decoding audio data", error);
+                        regions.splice(index, 1);
+                        waveSurfer.regions.list[region.id].remove();
+
+                        waveSurfer.drawBuffer();
+                        waveSurfer.clearRegions();
+
+                        // Add new regions based on updated audio
+                        let offset = 0;
+                        regions.forEach((reg) => {
+                            const newStart =
+                                reg.start > replaceTo
+                                    ? reg.start - (replaceTo - replaceFrom)
+                                    : reg.start;
+                            const newEnd =
+                                reg.end > replaceTo
+                                    ? reg.end - (replaceTo - replaceFrom)
+                                    : reg.end;
+                            waveSurfer.addRegion({
+                                id: reg.id,
+                                start: newStart,
+                                end: newEnd,
+                                color: reg.color,
+                                label: reg.label,
+                                drag: true,
+                            });
+                        });
+
+                        // Clear the file input element
+                        fileInput.value = "";
                     }
                 );
             };
+            reader.readAsArrayBuffer(file);
+        });
+        fileInput.click();
 
-            reader.readAsArrayBuffer(audioBlob);
-        };
+        setIsReplacing(false);
 
-        console.log("replace recording stop");
-    };
-
-    const handleImport = (region) => {
-        // logic for importing new audio to replace the selected region
+        // Clear redoActions array
+        setRedoActions([]);
     };
 
     return (
@@ -427,6 +601,8 @@ function TrimMerge() {
                                     Volume Down
                                 </button>
                                 <div>
+                                    <button onClick={undo}>UNDO</button>
+                                    <button onClick={redo}>REDO</button>
                                     {/* Render the list of regions */}
                                     <ul>
                                         {regions.map((region, index) => (
@@ -465,61 +641,39 @@ function TrimMerge() {
                                                 >
                                                     Cut
                                                 </button>
-
                                                 <button
                                                     onClick={() =>
-                                                        handleReplaceButtonClick()
+                                                        handleReplaceFunction()
                                                     }
                                                 >
                                                     Replace
                                                 </button>
-                                                {showReplaceOptions && (
-                                                    <div>
+                                                {isReplacing ? (
+                                                    <>
+                                                        {" "}
+                                                        <button>
+                                                            Record
+                                                        </button>{" "}
                                                         <button
                                                             onClick={() =>
-                                                                handleRecord(
-                                                                    region,
-                                                                    replaceMediaRecorder,
-                                                                    setReplaceAudioChunks
+                                                                handleReplaceImportFunction(
+                                                                    region
                                                                 )
                                                             }
                                                         >
-                                                            Record
-                                                        </button>
-                                                        {isReplaceRecording ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={() =>
-                                                                        handleRecordStop(
-                                                                            region,
-                                                                            waveSurfer
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Stop
-                                                                    Recording
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleImport(
-                                                                        region
-                                                                    )
-                                                                }
-                                                            >
-                                                                Import
-                                                            </button>
-                                                        )}
+                                                            Import
+                                                        </button>{" "}
                                                         <button
-                                                            onClick={
-                                                                handleCancelReplace
+                                                            onClick={() =>
+                                                                setIsReplacing(
+                                                                    false
+                                                                )
                                                             }
                                                         >
                                                             Cancel
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                        </button>{" "}
+                                                    </>
+                                                ) : null}
                                             </li>
                                         ))}
                                     </ul>

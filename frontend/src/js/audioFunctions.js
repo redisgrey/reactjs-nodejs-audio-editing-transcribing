@@ -42,33 +42,6 @@ export const recordStart = (
     console.log("recording start");
 };
 
-//*  RECORDING STOP BUTTON
-// export const recordStop = (
-//     mediaRecorder,
-//     setIsRecording,
-//     audioChunks,
-//     setAudioURL,
-//     mimeType
-// ) => {
-//     setIsRecording(false);
-
-//     mediaRecorder.current.stop();
-
-//     mediaRecorder.current.onstop = () => {
-//         const audioBlob = new Blob(audioChunks, { type: mimeType });
-
-//         console.log("mediaRecorder audioBlob: ", audioBlob);
-
-//         const audioUrl = URL.createObjectURL(audioBlob);
-
-//         setAudioURL(audioUrl);
-
-//         console.log(audioChunks);
-//     };
-
-//     console.log("recording stop");
-// };
-
 export const recordStop = (
     mediaRecorder,
     setIsRecording,
