@@ -167,6 +167,7 @@ function TrimMerge() {
                         regions.map((region) => ({ ...region, key: region.id }))
                     );
                     break;
+
                 case "CUT_REGION":
                     console.log(
                         "lastAction originalBuffer: ",
@@ -209,7 +210,7 @@ function TrimMerge() {
                     );
 
                     // Restore cut region
-                    regions.splice(lastAction.index, 1);
+
                     const cutRegion = lastAction.region;
                     console.log("undo cut cutRegion: ", cutRegion);
                     const startOffset = parseInt(
@@ -253,18 +254,25 @@ function TrimMerge() {
                     }
                     waveSurfer.backend.buffer = newBuffer;
 
-                    regions.splice(lastAction.index, 0, lastAction.region);
+                    // Add cut region back to WaveSurfer and update regions list
                     waveSurfer.addRegion(cutRegion);
+                    const newRegions = regions
+                        .concat([cutRegion])
+                        .sort((a, b) => a.start - b.start);
+                    setRegions(
+                        newRegions.map((region) => ({
+                            ...region,
+                            key: region.id,
+                        }))
+                    );
+
                     // Restore original color of region
                     waveSurfer.regions.list[cutRegion.id].update({
                         color: lastAction.color,
                     });
 
-                    // Update keys for regions list
-                    setRegions(
-                        regions.map((region) => ({ ...region, key: region.id }))
-                    );
                     break;
+
                 case "REPLACE_REGION":
                     // Replace region with original
                     const index = regions.findIndex(
@@ -400,6 +408,8 @@ function TrimMerge() {
         const action = {
             type: "CUT_REGION",
             region,
+            index,
+            color: region.color,
             originalBuffer: originalBuffer,
         };
         setUndoActions([...undoActions, action]);
