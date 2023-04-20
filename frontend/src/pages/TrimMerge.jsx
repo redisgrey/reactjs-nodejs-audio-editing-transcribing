@@ -168,14 +168,12 @@ function TrimMerge() {
                     );
                     break;
                 case "CUT_REGION":
-                    // Calculate the duration of the cut region
-                    const originalDuration =
-                        lastAction.region.end - lastAction.region.start;
-
-                    // Add the original duration to the lastAction object
-                    lastAction.originalDuration = originalDuration;
+                    console.log(
+                        "lastAction originalBuffer: ",
+                        lastAction.originalBuffer
+                    );
                     // Restore original buffer
-                    const originalBuffer = waveSurfer.backend.buffer;
+                    const originalBuffer = lastAction.originalBuffer;
                     console.log("undo cut originalBuffer: ", originalBuffer);
 
                     const newBuffer = waveSurfer.backend.ac.createBuffer(
@@ -183,6 +181,7 @@ function TrimMerge() {
                         originalBuffer.length,
                         originalBuffer.sampleRate
                     );
+                    console.log("undo cut newBuffer: ", newBuffer);
                     const leftChannel = originalBuffer.getChannelData(0);
                     const rightChannel =
                         originalBuffer.numberOfChannels > 1
@@ -253,6 +252,8 @@ function TrimMerge() {
                         console.log("endOffset: ", endOffset);
                     }
                     waveSurfer.backend.buffer = newBuffer;
+
+                    regions.splice(lastAction.index, 0, lastAction.region);
                     waveSurfer.addRegion(cutRegion);
                     // Restore original color of region
                     waveSurfer.regions.list[cutRegion.id].update({
@@ -396,7 +397,11 @@ function TrimMerge() {
         });
 
         // Add cut action to undoActions array
-        const action = { type: "CUT_REGION", region };
+        const action = {
+            type: "CUT_REGION",
+            region,
+            originalBuffer: originalBuffer,
+        };
         setUndoActions([...undoActions, action]);
     };
 
