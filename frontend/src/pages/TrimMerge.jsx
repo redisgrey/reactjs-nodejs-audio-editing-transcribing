@@ -52,6 +52,7 @@ function TrimMerge() {
     const [isReplacing, setIsReplacing] = useState(false);
 
     const [undoActions, setUndoActions] = useState([]);
+
     const [redoActions, setRedoActions] = useState([]);
 
     //* MICROPHONE ACCESS
@@ -144,6 +145,12 @@ function TrimMerge() {
         }
         waveSurfer.play(region.start, region.end);
         setCurrentRegion(region);
+    };
+
+    const handleRestart = () => {
+        waveSurfer.seekTo(0);
+        waveSurfer.play();
+        setCurrentRegion(null);
     };
 
     const undo = () => {
@@ -589,14 +596,24 @@ function TrimMerge() {
                                         <BsDownload /> <span>Import Audio</span>
                                     </label>
                                 </div>
-                                <div id="waveform"></div>
+                                <div className="mt-3" id="waveform"></div>
                                 <div id="timeline"></div>
-                                <button
-                                    className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
-                                    onClick={handlePlayPause}
-                                >
-                                    {playing ? "Pause" : "Play"}
-                                </button>{" "}
+
+                                <div className="flex space-x-4">
+                                    <button
+                                        className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={handlePlayPause}
+                                    >
+                                        {playing ? "Pause" : "Play"}
+                                    </button>{" "}
+                                    <button
+                                        className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={handleRestart}
+                                    >
+                                        Restart
+                                    </button>
+                                </div>
+
                                 <input
                                     type="range"
                                     id="slider"
@@ -617,8 +634,21 @@ function TrimMerge() {
                                     Volume Down
                                 </button>
                                 <div>
-                                    <button onClick={undo}>UNDO</button>
-                                    <button onClick={redo}>REDO</button>
+                                    <div className="flex space-x-5 mt-4 mb-2">
+                                        <button
+                                            className="btn bg-red-500 text-white"
+                                            onClick={undo}
+                                        >
+                                            UNDO
+                                        </button>
+                                        <button
+                                            className="btn bg-red-500 text-white"
+                                            onClick={redo}
+                                        >
+                                            REDO
+                                        </button>
+                                    </div>
+
                                     {/* Render the list of regions */}
                                     <ul>
                                         {regions.map((region, index) => (
@@ -693,7 +723,6 @@ function TrimMerge() {
                                             </li>
                                         ))}
                                     </ul>
-                                    <audio src={audioURL} controls></audio>
                                 </div>
                             </div>
                         </div>

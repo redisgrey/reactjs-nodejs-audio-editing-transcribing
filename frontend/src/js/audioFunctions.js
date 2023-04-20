@@ -160,7 +160,6 @@ function getRandomColor() {
             color += letters[Math.floor(Math.random() * 16)];
         }
         const result = color + "80";
-        // console.log("getRandomColor result:", result);
         return result;
     };
 }
@@ -233,16 +232,12 @@ export const handleFileChange = (
                     updatedRegions[index] = region;
                     return updatedRegions;
                 });
-                // console.log("Region updated:", region);
-                // Perform any necessary processing or actions here
             });
 
             waveSurfer.on("region-removed", (region) => {
                 setRegions((prevRegions) =>
                     prevRegions.filter((r) => r.id !== region.id)
                 );
-                // console.log("Region removed:", region);
-                // Perform any necessary processing or actions here
             });
 
             sliderRef.current.oninput = function () {
