@@ -53,6 +53,8 @@ function TrimMerge() {
 
     const [isReplaceRecording, setIsReplaceRecording] = useState(false);
 
+    const [newMediaRecorder, setNewMediaRecorder] = useState(null);
+
     const [undoActions, setUndoActions] = useState([]);
 
     const [redoActions, setRedoActions] = useState([]);
@@ -593,21 +595,27 @@ function TrimMerge() {
                     originalBuffer.length,
                     originalBuffer.sampleRate
                 );
-                for (let i = 0; i < originalBuffer.numberOfChannels; i++) {
+                const numChannels = originalBuffer.numberOfChannels;
+                for (let i = 0; i < numChannels; i++) {
                     const channelData = originalBuffer.getChannelData(i);
-                    newBuffer
-                        .getChannelData(i)
-                        .set(channelData.subarray(0, startOffset));
-                    newBuffer
-                        .getChannelData(i)
-                        .set(recordedBuffer.getChannelData(i), startOffset);
-                    newBuffer
-                        .getChannelData(i)
-                        .set(
+                    const newChannelData = newBuffer.getChannelData(i);
+                    if (i < recordedBuffer.numberOfChannels) {
+                        newChannelData.set(
+                            channelData.subarray(0, startOffset)
+                        );
+                        newChannelData.set(
+                            recordedBuffer.getChannelData(i),
+                            startOffset
+                        );
+                        newChannelData.set(
                             channelData.subarray(endOffset),
                             startOffset + recordedBuffer.length
                         );
+                    } else {
+                        newChannelData.set(channelData);
+                    }
                 }
+
                 waveSurfer.backend.buffer = newBuffer;
 
                 // Remove the replaced region from the list and the waveform
@@ -645,19 +653,22 @@ function TrimMerge() {
                 setRedoActions([]);
 
                 // Stop recording and release the stream
-                mediaRecorder.stop();
-                console.log("replace record stop");
-                stream.getTracks().forEach((track) => track.stop());
+                // mediaRecorder.stop();
+                // console.log("replace record stop");
+                // stream.getTracks().forEach((track) => track.stop());
             });
             mediaRecorder.start();
             setIsReplaceRecording(true);
+
+            // Set the newMediaRecorder object to state so it can be stopped later
+            setNewMediaRecorder(mediaRecorder);
         }
 
         console.log("replace record start");
     };
 
     const handleReplaceRecordStop = () => {
-        mediaRecorder.stop();
+        newMediaRecorder.stop();
     };
 
     return (
