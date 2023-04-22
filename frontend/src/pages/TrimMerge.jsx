@@ -291,27 +291,36 @@ function TrimMerge() {
                     break;
 
                 case "REPLACE_REGION":
-                    // Replace region with original
-                    const index = regions.findIndex(
-                        (reg) => reg.id === lastAction.region.id
+                    // Get original buffer and region
+                    const replaceOriginalBuffer = lastAction.originalBuffer;
+                    console.log(
+                        "undo replace originalbuffer: ",
+                        replaceOriginalBuffer
                     );
-                    regions.splice(index, 1, lastAction.originalRegion);
-                    waveSurfer.regions.list[lastAction.region.id].update(
-                        lastAction.originalRegion
+                    const originalRegion = lastAction.originalRegion;
+
+                    // Restore original buffer
+                    waveSurfer.backend.buffer = replaceOriginalBuffer;
+
+                    // Add cut region back to WaveSurfer and update regions list
+                    waveSurfer.addRegion(lastAction.region);
+                    const newReplaceRegions = regions
+                        .concat([lastAction.region])
+                        .sort((a, b) => a.start - b.start);
+                    setRegions(
+                        newReplaceRegions.map((region) => ({
+                            ...region,
+                            key: region.id,
+                        }))
                     );
 
                     // Restore original color of region
-                    waveSurfer.regions.list[
-                        lastAction.originalRegion.id
-                    ].update({
+                    waveSurfer.regions.list[lastAction.region.id].update({
                         color: lastAction.color,
                     });
 
-                    // Update keys for regions list
-                    setRegions(
-                        regions.map((region) => ({ ...region, key: region.id }))
-                    );
                     break;
+
                 default:
                     break;
             }
@@ -332,7 +341,7 @@ function TrimMerge() {
                     waveSurfer.regions.list[lastAction.region.id].remove();
                     break;
 
-                case "REPLACE_REGION":
+                    // case "REPLACE_REGION":
                     // Replace region with old region
                     const oldRegion = lastAction.oldRegion;
                     const newRegion = lastAction.newRegion;
@@ -433,6 +442,9 @@ function TrimMerge() {
     };
 
     const handleReplaceImportFunction = (region) => {
+        // Save original buffer state to a variable
+        const originalBufferState = waveSurfer.backend.buffer;
+
         const replaceFrom = region.start;
         const replaceTo = region.end;
         const originalBuffer = waveSurfer.backend.buffer;
@@ -553,6 +565,16 @@ function TrimMerge() {
 
         // Clear redoActions array
         setRedoActions([]);
+
+        // Add cut action to undoActions array
+        const action = {
+            type: "REPLACE_REGION",
+            region,
+
+            color: region.color,
+            originalBuffer: originalBuffer,
+        };
+        setUndoActions([...undoActions, action]);
     };
 
     const handleReplaceRecordFunction = (region, stream) => {
@@ -651,11 +673,6 @@ function TrimMerge() {
 
                 // Clear redoActions array
                 setRedoActions([]);
-
-                // Stop recording and release the stream
-                // mediaRecorder.stop();
-                // console.log("replace record stop");
-                // stream.getTracks().forEach((track) => track.stop());
             });
             mediaRecorder.start();
             setIsReplaceRecording(true);
@@ -665,6 +682,16 @@ function TrimMerge() {
         }
 
         console.log("replace record start");
+
+        // Add cut action to undoActions array
+        const action = {
+            type: "REPLACE_REGION",
+            region,
+
+            color: region.color,
+            originalBuffer: originalBuffer,
+        };
+        setUndoActions([...undoActions, action]);
     };
 
     const handleReplaceRecordStop = () => {
