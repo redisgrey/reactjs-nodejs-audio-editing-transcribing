@@ -8,7 +8,7 @@ import SpeechToText from "./SpeechToText";
 
 import TextToSpeech from "./TTS";
 
-import TrimAndMerge from "./TrimMerge";
+import AudioEditor from "./AudioEditor";
 
 function Dashboard() {
     const { user } = useSelector((state) => state.auth);
@@ -98,7 +98,7 @@ function Dashboard() {
                                                         setTextToSpeech(false);
                                                     }}
                                                 >
-                                                    Trim and Merge
+                                                    Audio Editor
                                                 </button>
                                             </div>
                                         </form>
@@ -114,7 +114,7 @@ function Dashboard() {
                                             ) : null}
 
                                             {trimAndMerge ? (
-                                                <TrimAndMerge />
+                                                <AudioEditor />
                                             ) : null}
 
                                             {!speechToText &&
