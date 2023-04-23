@@ -2,11 +2,13 @@ import { useState, useRef } from "react";
 
 import { useSelector } from "react-redux";
 
+import SpeechRecognition, {
+    useSpeechRecognition,
+} from "react-speech-recognition";
+
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
 import { AiOutlineZoomIn, AiOutlineZoomOut } from "react-icons/ai";
-
-import { ImVolumeIncrease, ImVolumeDecrease } from "react-icons/im";
 
 import {
     recordStart,
@@ -65,6 +67,9 @@ function AudioEditor() {
 
     const [redoActions, setRedoActions] = useState([]);
 
+    //* INITIALIZING THE SPEECHRECOGNITION API
+    const { transcript, resetTranscript } = useSpeechRecognition();
+
     //* RECORDING START BUTTON
     const startRecording = () => {
         navigator.mediaDevices
@@ -77,6 +82,9 @@ function AudioEditor() {
                     setAudioChunks,
                     mimeType
                 );
+                SpeechRecognition.startListening({
+                    continuous: true,
+                });
             })
             .catch((error) => {
                 console.error("Failed to get access to microphone: ", error);
@@ -95,6 +103,15 @@ function AudioEditor() {
             sliderRef,
             setRegions
         );
+        SpeechRecognition.stopListening();
+    };
+
+    const refreshTranscript = () => {
+        resetTranscript();
+        SpeechRecognition.stopListening();
+        SpeechRecognition.startListening({
+            continuous: true,
+        });
     };
 
     // * IMPORT AUDIO FUNCTION
@@ -309,6 +326,20 @@ function AudioEditor() {
                                         <AiOutlineZoomIn />
                                     </div>
                                 </div>
+
+                                <div className="form-group mt-5">
+                                    <textarea
+                                        id="textarea"
+                                        rows="6"
+                                        className="form-control"
+                                        value={transcript}
+                                        readOnly
+                                    ></textarea>
+                                </div>
+
+                                <button onClick={refreshTranscript}>
+                                    Refresh Transcript
+                                </button>
 
                                 <div>
                                     <div className="flex space-x-5 mt-4 mb-4 items-center">
