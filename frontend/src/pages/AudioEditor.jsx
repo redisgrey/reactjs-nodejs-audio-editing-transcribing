@@ -106,12 +106,19 @@ function AudioEditor() {
         SpeechRecognition.stopListening();
     };
 
-    const refreshTranscript = () => {
-        resetTranscript();
-        SpeechRecognition.stopListening();
-        SpeechRecognition.startListening({
-            continuous: true,
-        });
+    const downloadTranscript = () => {
+        const element = document.createElement("a");
+        const file = new Blob([transcript], { type: "text/plain" });
+        const now = new Date();
+        const dateString = now.toLocaleDateString();
+        const timeString = now
+            .toLocaleTimeString([], { hour12: false })
+            .replace(/:/g, "-");
+        const filename = `transcript_${dateString}_${timeString}.txt`;
+        element.href = URL.createObjectURL(file);
+        element.download = filename;
+        document.body.appendChild(element); // Required for this to work in FireFox
+        element.click();
     };
 
     // * IMPORT AUDIO FUNCTION
@@ -134,6 +141,7 @@ function AudioEditor() {
 
     const resetWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
         removeWaveform(waveSurfer, setWaveSurfer, setRegions);
+        resetTranscript();
     };
 
     const handlePlayPause = () => {
@@ -337,9 +345,21 @@ function AudioEditor() {
                                     ></textarea>
                                 </div>
 
-                                <button onClick={refreshTranscript}>
-                                    Refresh Transcript
-                                </button>
+                                <div className="flex space-x-3 mt-3">
+                                    <button
+                                        className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={downloadTranscript}
+                                    >
+                                        Download Transcript
+                                    </button>
+
+                                    <button
+                                        className="btn  bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={resetTranscript}
+                                    >
+                                        Reset Transcript
+                                    </button>
+                                </div>
 
                                 <div>
                                     <div className="flex space-x-5 mt-4 mb-4 items-center">
