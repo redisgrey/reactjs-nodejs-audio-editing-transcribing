@@ -8,8 +8,6 @@ import SpeechToText from "./SpeechToText";
 
 import TextToSpeech from "./TTS";
 
-import AudioEditor from "./AudioEditor";
-
 function Dashboard() {
     const { user } = useSelector((state) => state.auth);
 
@@ -18,8 +16,6 @@ function Dashboard() {
     const [speechToText, setSpeechToText] = useState(false);
 
     const [textToSpeech, setTextToSpeech] = useState(false);
-
-    const [trimAndMerge, setTrimAndMerge] = useState(false);
 
     useEffect(() => {
         const userData = JSON.parse(localStorage.getItem("user"));
@@ -73,7 +69,6 @@ function Dashboard() {
                                                         e.preventDefault();
                                                         setSpeechToText(true);
                                                         setTextToSpeech(false);
-                                                        setTrimAndMerge(false);
                                                     }}
                                                 >
                                                     Speech-To-Text
@@ -84,21 +79,9 @@ function Dashboard() {
                                                         e.preventDefault();
                                                         setTextToSpeech(true);
                                                         setSpeechToText(false);
-                                                        setTrimAndMerge(false);
                                                     }}
                                                 >
                                                     Text-To-Speech
-                                                </button>
-                                                <button
-                                                    className="w-[100%] text-xl p-2 text-white bg-[black] hover:bg-[#00000067]"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setTrimAndMerge(true);
-                                                        setSpeechToText(false);
-                                                        setTextToSpeech(false);
-                                                    }}
-                                                >
-                                                    Audio Editor
                                                 </button>
                                             </div>
                                         </form>
@@ -113,13 +96,7 @@ function Dashboard() {
                                                 <TextToSpeech />
                                             ) : null}
 
-                                            {trimAndMerge ? (
-                                                <AudioEditor />
-                                            ) : null}
-
-                                            {!speechToText &&
-                                            !textToSpeech &&
-                                            !trimAndMerge ? (
+                                            {!speechToText && !textToSpeech ? (
                                                 <>
                                                     <div className=" font-[Poppins]">
                                                         <div className="container bg-gray-300 h-[80vh]  flex flex-col  items-center">
