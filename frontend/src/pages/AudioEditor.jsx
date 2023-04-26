@@ -65,9 +65,6 @@ function AudioEditor() {
 
     const [redoActions, setRedoActions] = useState([]);
 
-    // //* INITIALIZING THE SPEECHRECOGNITION API
-    // const { transcript, resetTranscript } = useSpeechRecognition();
-
     //* RECORDING START BUTTON
     const startRecording = () => {
         navigator.mediaDevices
@@ -80,12 +77,9 @@ function AudioEditor() {
                     setAudioChunks,
                     mimeType
                 );
-                SpeechRecognition.startListening({
-                    continuous: true,
-                });
             })
             .catch((error) => {
-                console.error("Failed to get access to microphone: ", error);
+                console.error("error ", error);
             });
     };
 
@@ -101,7 +95,6 @@ function AudioEditor() {
             sliderRef,
             setRegions
         );
-        SpeechRecognition.stopListening();
     };
 
     const downloadTranscript = () => {
@@ -245,7 +238,7 @@ function AudioEditor() {
                 );
             })
             .catch((error) => {
-                console.error("Failed to get access to microphone: ", error);
+                console.error("error ", error);
             });
     };
 
