@@ -157,8 +157,6 @@ function getRandomColor() {
 export const handleFileChange = (
     event,
     setAudioChunks,
-    setImportedAudioList,
-    importedAudioList,
     setWaveSurfer,
     setPlaying,
     sliderRef,
@@ -179,7 +177,6 @@ export const handleFileChange = (
                 url: URL.createObjectURL(file),
                 buffer: audioBuffer,
             };
-            setImportedAudioList([...importedAudioList, audio]);
 
             // Create a new instance of WaveSurfer
             const waveSurfer = WaveSurfer.create({

@@ -43,8 +43,6 @@ function AudioEditor() {
 
     const inputRef = useRef(null);
 
-    const [importedAudioList, setImportedAudioList] = useState([]);
-
     const [waveSurfer, setWaveSurfer] = useState(null);
 
     const [playing, setPlaying] = useState(false);
@@ -130,8 +128,6 @@ function AudioEditor() {
         handleFileChange(
             event,
             setAudioChunks,
-            setImportedAudioList,
-            importedAudioList,
             setWaveSurfer,
             setPlaying,
             sliderRef,
@@ -161,6 +157,7 @@ function AudioEditor() {
         }
         waveSurfer.play(region.start, region.end);
         setCurrentRegion(region);
+        setPlaying(true);
     };
 
     const handleRestart = () => {
@@ -314,7 +311,7 @@ function AudioEditor() {
                                             )
                                         }
                                     >
-                                        Remove Waveform
+                                        Reset
                                     </button>
                                 </div>
                                 <div className="flex space-x-3">
