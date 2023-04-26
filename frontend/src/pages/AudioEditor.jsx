@@ -65,8 +65,8 @@ function AudioEditor() {
 
     const [redoActions, setRedoActions] = useState([]);
 
-    //* INITIALIZING THE SPEECHRECOGNITION API
-    const { transcript, resetTranscript } = useSpeechRecognition();
+    // //* INITIALIZING THE SPEECHRECOGNITION API
+    // const { transcript, resetTranscript } = useSpeechRecognition();
 
     //* RECORDING START BUTTON
     const startRecording = () => {
@@ -133,6 +133,20 @@ function AudioEditor() {
             sliderRef,
             setRegions
         );
+    };
+
+    const { resetTranscript, transcript } = useSpeechRecognition();
+
+    const handleTranscription = () => {
+        SpeechRecognition.startListening({
+            continuous: true,
+            language: "en-US",
+            interimResults: true,
+        });
+    };
+
+    const handleStopTranscription = () => {
+        SpeechRecognition.stopListening();
     };
 
     const resetWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
@@ -330,6 +344,21 @@ function AudioEditor() {
 
                                         <AiOutlineZoomIn />
                                     </div>
+                                </div>
+
+                                <div className="mt-2 flex justify-center">
+                                    <button
+                                        className="btn  bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={handleTranscription}
+                                    >
+                                        Transcribe Audio
+                                    </button>
+                                    <button
+                                        className="btn  bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={handleStopTranscription}
+                                    >
+                                        Stop Transcribing
+                                    </button>
                                 </div>
 
                                 <div className="form-group mt-5">
