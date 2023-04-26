@@ -65,6 +65,8 @@ function AudioEditor() {
 
     const [redoActions, setRedoActions] = useState([]);
 
+    const [isTranscribing, setIsTranscribing] = useState(false);
+
     //* RECORDING START BUTTON
     const startRecording = () => {
         navigator.mediaDevices
@@ -136,10 +138,12 @@ function AudioEditor() {
             language: "en-US",
             interimResults: true,
         });
+        setIsTranscribing(true);
     };
 
     const handleStopTranscription = () => {
         SpeechRecognition.stopListening();
+        setIsTranscribing(false);
     };
 
     const resetWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
@@ -246,6 +250,79 @@ function AudioEditor() {
         newMediaRecorder.stop();
     };
 
+    const handleDownload = (waveSurfer) => {
+        console.log("wavesurfer download: ", waveSurfer);
+        if (waveSurfer) {
+            downloadAudio(waveSurfer);
+        } else {
+            console.error("WaveSurfer object is undefined.");
+        }
+    };
+
+    const downloadAudio = (waveSurfer) => {
+        // Get the modified audio buffer
+        const modifiedBuffer = waveSurfer.backend.buffer;
+
+        // Create a new blob with the audio data
+        const audioBlob = bufferToWave(modifiedBuffer);
+
+        // Create a temporary download link and trigger a click event to download the file
+        const audioBlobUrl = URL.createObjectURL(audioBlob);
+        const link = document.createElement("a");
+        link.href = audioBlobUrl;
+        link.download = "modified_audio.wav";
+        link.click();
+
+        // Clean up
+        URL.revokeObjectURL(audioBlobUrl);
+    };
+
+    function bufferToWave(abuffer) {
+        const numOfChan = abuffer.numberOfChannels;
+        const length = abuffer.length * numOfChan * 2 + 44;
+        const buffer = new ArrayBuffer(length);
+        const view = new DataView(buffer);
+
+        writeString(view, 0, "RIFF");
+        view.setUint32(4, length - 8, true);
+        writeString(view, 8, "WAVE");
+        writeString(view, 12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, numOfChan, true);
+        view.setUint32(24, abuffer.sampleRate, true);
+        view.setUint32(28, abuffer.sampleRate * 4, true);
+        view.setUint16(32, numOfChan * 2, true);
+        view.setUint16(34, 16, true);
+        writeString(view, 36, "data");
+        view.setUint32(40, length - 44, true);
+
+        floatTo16BitPCM(view, 44, abuffer.getChannelData(0));
+
+        if (numOfChan === 2) {
+            floatTo16BitPCM(
+                view,
+                44 + abuffer.length * 2,
+                abuffer.getChannelData(1)
+            );
+        }
+
+        return new Blob([view], { type: "audio/wav" });
+    }
+
+    function floatTo16BitPCM(output, offset, input) {
+        for (let i = 0; i < input.length; i++, offset += 2) {
+            const s = Math.max(-1, Math.min(1, input[i]));
+            output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+        }
+    }
+
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
     return (
         <>
             {user ? (
@@ -309,6 +386,14 @@ function AudioEditor() {
                                         Restart
                                     </button>
                                     <button
+                                        className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                        onClick={() =>
+                                            handleDownload(waveSurfer)
+                                        }
+                                    >
+                                        Download Audio
+                                    </button>
+                                    <button
                                         className="btn mt-5 bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
                                         onClick={() =>
                                             resetWaveform(
@@ -341,10 +426,13 @@ function AudioEditor() {
 
                                 <div className="mt-2 flex justify-center">
                                     <button
-                                        className="btn  bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                        className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] w-50 me-4 space-x-2 flex justify-center items-center"
+                                        disabled={isTranscribing ? true : false}
                                         onClick={handleTranscription}
                                     >
-                                        Transcribe Audio
+                                        {isTranscribing
+                                            ? "Transcribing Audio..."
+                                            : "Transcribe Audio"}
                                     </button>
                                     <button
                                         className="btn  bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
