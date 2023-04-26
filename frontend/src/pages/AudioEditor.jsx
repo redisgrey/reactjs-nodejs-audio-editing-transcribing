@@ -22,6 +22,7 @@ import {
     handleReplaceImportFunction,
     handleReplaceRecordFunction,
     removeWaveform,
+    bufferToWave,
 } from "../js/audioFunctions";
 
 import NotFound from "./NotFound";
@@ -269,59 +270,18 @@ function AudioEditor() {
         // Create a temporary download link and trigger a click event to download the file
         const audioBlobUrl = URL.createObjectURL(audioBlob);
         const link = document.createElement("a");
+
+        // Add timestamp to the file name
+        const timestamp = new Date().toISOString();
+        const filename = `modified_audio_${timestamp}.wav`;
+
         link.href = audioBlobUrl;
-        link.download = "modified_audio.wav";
+        link.download = filename;
         link.click();
 
         // Clean up
         URL.revokeObjectURL(audioBlobUrl);
     };
-
-    function bufferToWave(abuffer) {
-        const numOfChan = abuffer.numberOfChannels;
-        const length = abuffer.length * numOfChan * 2 + 44;
-        const buffer = new ArrayBuffer(length);
-        const view = new DataView(buffer);
-
-        writeString(view, 0, "RIFF");
-        view.setUint32(4, length - 8, true);
-        writeString(view, 8, "WAVE");
-        writeString(view, 12, "fmt ");
-        view.setUint32(16, 16, true);
-        view.setUint16(20, 1, true);
-        view.setUint16(22, numOfChan, true);
-        view.setUint32(24, abuffer.sampleRate, true);
-        view.setUint32(28, abuffer.sampleRate * 4, true);
-        view.setUint16(32, numOfChan * 2, true);
-        view.setUint16(34, 16, true);
-        writeString(view, 36, "data");
-        view.setUint32(40, length - 44, true);
-
-        floatTo16BitPCM(view, 44, abuffer.getChannelData(0));
-
-        if (numOfChan === 2) {
-            floatTo16BitPCM(
-                view,
-                44 + abuffer.length * 2,
-                abuffer.getChannelData(1)
-            );
-        }
-
-        return new Blob([view], { type: "audio/wav" });
-    }
-
-    function floatTo16BitPCM(output, offset, input) {
-        for (let i = 0; i < input.length; i++, offset += 2) {
-            const s = Math.max(-1, Math.min(1, input[i]));
-            output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-        }
-    }
-
-    function writeString(view, offset, string) {
-        for (let i = 0; i < string.length; i++) {
-            view.setUint8(offset + i, string.charCodeAt(i));
-        }
-    }
 
     return (
         <>
