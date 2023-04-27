@@ -94,7 +94,7 @@ function SpeechToText() {
     const [audioImported, setAudioImported] = useState(false);
 
     useEffect(() => {
-        const userId = localStorage.getItem("user");
+        const userId = JSON.parse(localStorage.getItem("user")).id;
         // Check if there is an audio file saved in IndexedDB
         const request = indexedDB.open(`myDatabase-${userId}`); // include the user
 
@@ -223,7 +223,9 @@ function SpeechToText() {
         setRecording(false);
         setAudioImported(false);
 
-        const request = indexedDB.open("myDatabase");
+        const userId = JSON.parse(localStorage.getItem("user")).id;
+        // Check if there is an audio file saved in IndexedDB
+        const request = indexedDB.open(`myDatabase-${userId}`); // include the user
 
         request.onsuccess = (event) => {
             const db = event.target.result;

@@ -7,7 +7,7 @@ import RegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions.min.js";
 export const saveAudioToIndexedDB = async (audioBlob) => {
     console.log("audioBlob: ", audioBlob);
 
-    const userId = localStorage.getItem("user");
+    const userId = JSON.parse(localStorage.getItem("user")).id;
     console.log(userId);
     const db = await openDatabase(userId); // pass in the user ID
     const tx = db.transaction("audio", "readwrite");
