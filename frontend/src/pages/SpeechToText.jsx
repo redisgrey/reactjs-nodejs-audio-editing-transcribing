@@ -35,7 +35,6 @@ import {
     removeWaveform,
     bufferToWave,
     loadAudioFromIndexedDB,
-    updateAudioInIndexedDB,
 } from "../js/audioFunctions";
 
 import NotFound from "./NotFound";
@@ -95,8 +94,9 @@ function SpeechToText() {
     const [audioImported, setAudioImported] = useState(false);
 
     useEffect(() => {
+        const userId = localStorage.getItem("user");
         // Check if there is an audio file saved in IndexedDB
-        const request = indexedDB.open("myDatabase");
+        const request = indexedDB.open(`myDatabase-${userId}`); // include the user
 
         request.onsuccess = (event) => {
             const db = event.target.result;
@@ -114,7 +114,8 @@ function SpeechToText() {
                         setWaveSurfer,
                         setPlaying,
                         setRegions,
-                        audioFile
+                        sliderRef,
+                        userId
                     );
                     setRecording(true);
                     setAudioImported(true);
@@ -294,8 +295,7 @@ function SpeechToText() {
             waveSurfer,
             regions,
             setUndoActions,
-            undoActions,
-            updateAudioInIndexedDB
+            undoActions
         );
         setUseCut(true);
     };
@@ -394,6 +394,7 @@ function SpeechToText() {
                                                 ? stopRecording
                                                 : startRecording
                                         }
+                                        disabled={waveSurfer ? true : false}
                                     >
                                         {isRecording ? (
                                             <>
@@ -414,6 +415,7 @@ function SpeechToText() {
                                         ref={inputRef}
                                         onChange={fileChangeHandler}
                                         accept="audio/*"
+                                        disabled={waveSurfer ? true : false}
                                     />
                                     <label
                                         htmlFor="file"

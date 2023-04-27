@@ -5,7 +5,11 @@ import TimelinePlugin from "wavesurfer.js/dist/plugin/wavesurfer.timeline.min.js
 import RegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions.min.js";
 
 export const saveAudioToIndexedDB = async (audioBlob) => {
-    const db = await openDatabase();
+    console.log("audioBlob: ", audioBlob);
+
+    const userId = localStorage.getItem("user");
+    console.log(userId);
+    const db = await openDatabase(userId); // pass in the user ID
     const tx = db.transaction("audio", "readwrite");
     const store = tx.objectStore("audio");
     const id = "audio-to-edit";
@@ -14,9 +18,9 @@ export const saveAudioToIndexedDB = async (audioBlob) => {
     console.log("Audio saved to IndexedDB with id:", id);
 };
 
-export const openDatabase = () => {
+export const openDatabase = (userId) => {
     return new Promise((resolve, reject) => {
-        const request = window.indexedDB.open("myDatabase", 2); // update the version number to 2
+        const request = window.indexedDB.open(`myDatabase-${userId}`, 2); // include the user ID in the database name
         request.onerror = () => {
             console.log("Failed to open database");
             reject();
@@ -35,10 +39,12 @@ export const openDatabase = () => {
 export const loadAudioFromIndexedDB = (
     setWaveSurfer,
     setPlaying,
-    setRegions
+    setRegions,
+    sliderRef,
+    userId
 ) => {
     // Open the database
-    const request = indexedDB.open("myDatabase");
+    const request = indexedDB.open(`myDatabase-${userId}`); // include the user ID in the database name
 
     request.onsuccess = (event) => {
         const db = event.target.result;
@@ -50,6 +56,8 @@ export const loadAudioFromIndexedDB = (
 
         request.onsuccess = (event) => {
             const audioFile = event.target.result;
+
+            console.log("audioFile: ", audioFile);
 
             // Create a new instance of WaveSurfer
             const waveSurfer = WaveSurfer.create({
@@ -101,28 +109,22 @@ export const loadAudioFromIndexedDB = (
                 );
             });
 
+            sliderRef.current.oninput = function () {
+                waveSurfer.zoom(Number(this.value));
+            };
+
             // Load the audio buffer into WaveSurfer
             waveSurfer.loadBlob(audioFile);
+            console.log("waveSurfer: ", waveSurfer);
 
             // Set the WaveSurfer instance to state
             setWaveSurfer(waveSurfer);
 
             // Set initial playing state to false
             setPlaying(false);
+            console.log("load called");
         };
     };
-};
-
-export const updateAudioInIndexedDB = async (updatedAudioBlob) => {
-    const db = await openDatabase();
-    const tx = db.transaction("audio", "readwrite");
-    const store = tx.objectStore("audio");
-    const id = "audio-to-edit";
-    let audioFile = await store.get(id);
-    audioFile = updatedAudioBlob;
-    store.put(audioFile, id);
-    await tx.complete;
-    console.log("Audio updated in IndexedDB with id:", id);
 };
 
 //* RECORDING START BUTTON
@@ -304,6 +306,7 @@ export const handleFileChange = (
             type: file.type,
         });
         setAudioChunks([audioBlob]);
+        console.log("audioBlob import: ", audioBlob);
         saveAudioToIndexedDB(audioBlob);
         const arrayBuffer = event.target.result;
         const audioContext = new AudioContext();
@@ -615,7 +618,7 @@ export const handleDeleteRegion = async (
     setUndoActions([...undoActions, action]);
 };
 
-export const handleCutRegion = (
+export const handleCutRegion = async (
     region,
     waveSurfer,
     regions,
@@ -652,6 +655,14 @@ export const handleCutRegion = (
     newBuffer.getChannelData(1).set(rightEndBuffer, startOffset);
     waveSurfer.backend.buffer = newBuffer;
 
+    // Create a new Blob object from the newBuffer object
+    const newAudioBlob = new Blob([newBuffer.getChannelData(0)], {
+        type: "audio/mpeg",
+    });
+    console.log("newAudioBlob: ", newAudioBlob);
+    // Update the audio in the IndexedDB
+    await saveAudioToIndexedDB(newAudioBlob);
+
     // Remove the cut region from the list and the waveform
     const index = regions.findIndex((reg) => reg.id === region.id);
     regions.splice(index, 1);
@@ -683,12 +694,6 @@ export const handleCutRegion = (
         originalBuffer: originalBuffer,
     };
     setUndoActions([...undoActions, action]);
-
-    // Update the audio in IndexedDB
-    const updatedAudioBlob = new Blob([newBuffer.getChannelData(0)], {
-        type: "audio/mpeg",
-    });
-    updateAudioInIndexedDB(updatedAudioBlob);
 };
 
 export const handleReplaceImportFunction = (
