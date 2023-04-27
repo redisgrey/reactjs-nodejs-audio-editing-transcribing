@@ -163,6 +163,19 @@ export const handleFileChange = (
     setRegions
 ) => {
     const file = event.target.files[0];
+
+    // Validate file type
+    if (!file.type.startsWith("audio/")) {
+        alert("Please select an audio file");
+        return;
+    }
+
+    // Validate file size
+    if (file.size > 10 * 1024 * 1024) {
+        alert("File size exceeds the maximum limit of 10 MB.");
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
         const audioBlob = new Blob([event.target.result], {
@@ -563,6 +576,13 @@ export const handleReplaceImportFunction = (
 
     const replaceFrom = region.start;
     const replaceTo = region.end;
+
+    // Check if the selected region is at least 5 seconds long
+    if (replaceTo - replaceFrom < 5) {
+        alert("Selected region must be at least 5 seconds long.");
+        return;
+    }
+
     const originalBuffer = waveSurfer.backend.buffer;
     const rate = originalBuffer.sampleRate;
     const originalDuration = originalBuffer.duration;
@@ -700,6 +720,13 @@ export const handleReplaceRecordFunction = (
 ) => {
     const replaceFrom = region.start;
     const replaceTo = region.end;
+
+    // Check if the selected region is at least 5 seconds long
+    if (replaceTo - replaceFrom < 5) {
+        alert("Selected region must be at least 5 seconds long.");
+        return;
+    }
+
     const originalBuffer = waveSurfer.backend.buffer;
     const rate = originalBuffer.sampleRate;
     const originalDuration = originalBuffer.duration;
@@ -729,6 +756,14 @@ export const handleReplaceRecordFunction = (
             const recordedBuffer = await waveSurfer.backend.ac.decodeAudioData(
                 arrayBuffer
             );
+
+            // Check if the length of the recorded buffer is longer than the selected region
+            const recordedDuration = recordedBuffer.duration;
+            const selectedDuration = replaceTo - replaceFrom;
+            if (recordedDuration > selectedDuration) {
+                alert("Recording is longer than selected region");
+                return;
+            }
 
             // Replace the selected region with the recorded audio
             const newBuffer = waveSurfer.backend.ac.createBuffer(

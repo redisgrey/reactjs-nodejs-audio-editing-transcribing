@@ -55,6 +55,7 @@ function SpeechToText() {
 
     const inputRef = useRef(null);
 
+    //* STATES FOR THE WAVESURFERJS
     const [waveSurfer, setWaveSurfer] = useState(null);
 
     const [playing, setPlaying] = useState(false);
@@ -65,6 +66,7 @@ function SpeechToText() {
 
     const [currentRegion, setCurrentRegion] = useState(null);
 
+    //* STATES FOR THE REPLACING AUDIO PARTS FUNCTION
     const [isReplacing, setIsReplacing] = useState(false);
 
     const [selectedRegion, setSelectedRegion] = useState(null);
@@ -73,11 +75,22 @@ function SpeechToText() {
 
     const [newMediaRecorder, setNewMediaRecorder] = useState(null);
 
+    //* STATES FOR THE UNDO AND REDO FUNCTION
     const [undoActions, setUndoActions] = useState([]);
 
     const [redoActions, setRedoActions] = useState([]);
 
+    const [useReplace, setUseReplace] = useState(false);
+
+    const [useCut, setUseCut] = useState(false);
+
+    //* STATES FOR THE TRANSCRIPTION FUNCTION
     const [isTranscribing, setIsTranscribing] = useState(false);
+
+    //* STATES FOR THE BUTTON DISABLING WHEN NOT IN USE
+    const [recording, setRecording] = useState(false);
+
+    const [audioImported, setAudioImported] = useState(false);
 
     //* RECORDING START BUTTON
     const startRecording = () => {
@@ -109,21 +122,7 @@ function SpeechToText() {
             sliderRef,
             setRegions
         );
-    };
-
-    const downloadTranscript = () => {
-        const element = document.createElement("a");
-        const file = new Blob([transcript], { type: "text/plain" });
-        const now = new Date();
-        const dateString = now.toLocaleDateString();
-        const timeString = now
-            .toLocaleTimeString([], { hour12: false })
-            .replace(/:/g, "-");
-        const filename = `transcript_${dateString}_${timeString}.txt`;
-        element.href = URL.createObjectURL(file);
-        element.download = filename;
-        document.body.appendChild(element); // Required for this to work in FireFox
-        element.click();
+        setRecording(true);
     };
 
     // * IMPORT AUDIO FUNCTION
@@ -140,6 +139,7 @@ function SpeechToText() {
             sliderRef,
             setRegions
         );
+        setAudioImported(true);
     };
 
     const { resetTranscript, transcript } = useSpeechRecognition();
@@ -158,9 +158,30 @@ function SpeechToText() {
         setIsTranscribing(false);
     };
 
+    const downloadTranscript = () => {
+        if (transcript.trim() === "") {
+            alert("Transcript is empty!");
+            return;
+        }
+        const element = document.createElement("a");
+        const file = new Blob([transcript], { type: "text/plain" });
+        const now = new Date();
+        const dateString = now.toLocaleDateString();
+        const timeString = now
+            .toLocaleTimeString([], { hour12: false })
+            .replace(/:/g, "-");
+        const filename = `transcript_${dateString}_${timeString}.txt`;
+        element.href = URL.createObjectURL(file);
+        element.download = filename;
+        document.body.appendChild(element); // Required for this to work in FireFox
+        element.click();
+    };
+
     const resetWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
         removeWaveform(waveSurfer, setWaveSurfer, setRegions);
         resetTranscript();
+        setRecording(false);
+        setAudioImported(false);
     };
 
     const handlePlayPause = () => {
@@ -192,6 +213,10 @@ function SpeechToText() {
 
     const undoAction = () => {
         undo(undoActions, regions, waveSurfer, setRegions, redoActions);
+        if (useCut || useReplace) {
+            setUseCut(false);
+            setUseReplace(false);
+        }
     };
 
     const redoAction = () => {
@@ -217,6 +242,7 @@ function SpeechToText() {
             setUndoActions,
             undoActions
         );
+        setUseCut(true);
     };
 
     const handleReplaceFunction = (region) => {
@@ -234,6 +260,7 @@ function SpeechToText() {
             setUndoActions,
             undoActions
         );
+        setUseReplace(true);
     };
 
     const replaceRecord = (region) => {
@@ -252,6 +279,7 @@ function SpeechToText() {
                     setUndoActions,
                     undoActions
                 );
+                setUseReplace(true);
             })
             .catch((error) => {
                 console.error("error ", error);
@@ -343,249 +371,283 @@ function SpeechToText() {
                                 <div className="mt-3" id="waveform"></div>
                                 <div id="timeline"></div>
 
-                                <div className="flex space-x-4">
-                                    <button
-                                        className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
-                                        onClick={handlePlayPause}
-                                    >
-                                        {playing ? (
-                                            <>
-                                                <BsFillStopFill />{" "}
-                                                <span>Pause</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <BsFillPlayFill />{" "}
-                                                <span>Play</span>
-                                            </>
-                                        )}
-                                    </button>{" "}
-                                    <button
-                                        className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
-                                        onClick={handleRestart}
-                                    >
-                                        <VscDebugRestart /> <span>Restart</span>
-                                    </button>
-                                    <button
-                                        className="btn mt-5 btn-secondary w-50 me-4 space-x-2 flex justify-center items-center"
-                                        onClick={() =>
-                                            handleDownload(waveSurfer)
-                                        }
-                                    >
-                                        <BsDownload />{" "}
-                                        <span>Download Audio</span>
-                                    </button>
-                                    <button
-                                        className="btn mt-5 bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
-                                        onClick={() =>
-                                            resetWaveform(
-                                                waveSurfer,
-                                                setWaveSurfer,
-                                                setRegions
-                                            )
-                                        }
-                                    >
-                                        <AiOutlineClear /> <span>Reset</span>
-                                    </button>
-                                </div>
-                                <div className="flex space-x-3">
-                                    <div className="flex space-x-2 mt-2">
-                                        <AiOutlineZoomOut />
-
-                                        <input
-                                            type="range"
-                                            id="slider"
-                                            ref={sliderRef}
-                                            min="0.5"
-                                            max="100"
-                                            step="0.01"
-                                            defaultValue="1"
-                                        />
-
-                                        <AiOutlineZoomIn />
-                                    </div>
-                                </div>
-
-                                <div className="mt-2 flex justify-center">
-                                    <button
-                                        className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
-                                        disabled={isTranscribing ? true : false}
-                                        onClick={handleTranscription}
-                                    >
-                                        {isTranscribing ? (
-                                            "Transcribing Audio..."
-                                        ) : (
-                                            <>
-                                                <CgTranscript />{" "}
-                                                <span>Transcribe Audio</span>
-                                            </>
-                                        )}
-                                    </button>
-                                    <button
-                                        className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
-                                        onClick={handleStopTranscription}
-                                    >
-                                        <AiOutlineStop />{" "}
-                                        <span>Stop Transcribing</span>
-                                    </button>
-                                </div>
-
-                                <div className="form-group mt-5">
-                                    <textarea
-                                        id="textarea"
-                                        rows="6"
-                                        className="form-control"
-                                        value={transcript}
-                                        readOnly
-                                    ></textarea>
-                                </div>
-
-                                <div className="flex space-x-3 mt-3">
-                                    <button
-                                        className="btn  btn-secondary w-50 me-4 space-x-2 flex justify-center items-center"
-                                        onClick={downloadTranscript}
-                                    >
-                                        <BsDownload />{" "}
-                                        <span>Download Transcript</span>
-                                    </button>
-
-                                    <button
-                                        className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
-                                        onClick={resetTranscript}
-                                    >
-                                        <AiOutlineClear />{" "}
-                                        <span>Reset Transcript</span>
-                                    </button>
-                                </div>
-
-                                <div>
-                                    <div className="flex space-x-5 mt-4 mb-4 items-center">
-                                        <h1 className="text-2xl font-bold">
-                                            Regions List
-                                        </h1>
-                                        <button
-                                            className="btn flex items-center space-x-1 bg-red-500 focus:bg-red-500 hover:bg-red-300 text-white"
-                                            onClick={undoAction}
-                                        >
-                                            <BiUndo /> <span>UNDO</span>
-                                        </button>
-                                        <button
-                                            className="btn flex items-center space-x-1 bg-red-500 focus:bg-red-500 hover:bg-red-300 text-white"
-                                            onClick={redoAction}
-                                        >
-                                            <BiRedo /> <span>REDO</span>
-                                        </button>
-                                    </div>
-
-                                    {/* Render the list of regions */}
-                                    <ul className="space-y-4">
-                                        {regions.map((region, index) => (
-                                            <li
-                                                key={region.id}
-                                                className="flex items-center"
+                                {recording || audioImported ? (
+                                    <>
+                                        {" "}
+                                        <div className="flex space-x-4">
+                                            <button
+                                                className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={handlePlayPause}
                                             >
-                                                <div
-                                                    style={{
-                                                        backgroundColor:
-                                                            region.color,
-                                                        width: "60px",
-                                                        height: "30px",
-                                                        display: "inline-block",
-                                                        marginRight: "5px",
-                                                    }}
-                                                ></div>
-                                                <span>{region.label}</span>
-                                                <span className="space-x-2">
-                                                    <button
-                                                        className="btn bg-[#E09F3e] focus:bg-[#E09F3e] hover:bg-[#E09F3e]"
-                                                        onClick={() =>
-                                                            handlePlayRegion(
-                                                                region
-                                                            )
-                                                        }
-                                                    >
-                                                        Play
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-secondary"
-                                                        onClick={() =>
-                                                            deleteRegion(region)
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-secondary"
-                                                        onClick={() =>
-                                                            cutRegion(region)
-                                                        }
-                                                    >
-                                                        Cut
-                                                    </button>
-                                                    <button
-                                                        className="btn bg-[#E09F3e] focus:bg-[#e09f3e86] hover:bg-[#E09F3e]"
-                                                        onClick={() =>
-                                                            handleReplaceFunction(
-                                                                region
-                                                            )
-                                                        }
-                                                    >
-                                                        Replace
-                                                    </button>
-                                                    {isReplacing &&
-                                                        selectedRegion ===
-                                                            region && (
-                                                            <>
+                                                {playing ? (
+                                                    <>
+                                                        <BsFillStopFill />{" "}
+                                                        <span>Pause</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <BsFillPlayFill />{" "}
+                                                        <span>Play</span>
+                                                    </>
+                                                )}
+                                            </button>{" "}
+                                            <button
+                                                className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={handleRestart}
+                                            >
+                                                <VscDebugRestart />{" "}
+                                                <span>Restart</span>
+                                            </button>
+                                            <button
+                                                className="btn mt-5 btn-secondary w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={() =>
+                                                    handleDownload(waveSurfer)
+                                                }
+                                            >
+                                                <BsDownload />{" "}
+                                                <span>Download Audio</span>
+                                            </button>
+                                            <button
+                                                className="btn mt-5 bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={() =>
+                                                    resetWaveform(
+                                                        waveSurfer,
+                                                        setWaveSurfer,
+                                                        setRegions
+                                                    )
+                                                }
+                                            >
+                                                <AiOutlineClear />{" "}
+                                                <span>Reset</span>
+                                            </button>
+                                        </div>
+                                        <div className="flex space-x-3">
+                                            <div className="flex space-x-2 mt-2">
+                                                <AiOutlineZoomOut />
+
+                                                <input
+                                                    type="range"
+                                                    id="slider"
+                                                    ref={sliderRef}
+                                                    min="0.5"
+                                                    max="100"
+                                                    step="0.01"
+                                                    defaultValue="1"
+                                                />
+
+                                                <AiOutlineZoomIn />
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 flex justify-center">
+                                            <button
+                                                className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
+                                                disabled={
+                                                    isTranscribing
+                                                        ? true
+                                                        : false
+                                                }
+                                                onClick={handleTranscription}
+                                            >
+                                                {isTranscribing ? (
+                                                    "Transcribing Audio..."
+                                                ) : (
+                                                    <>
+                                                        <CgTranscript />{" "}
+                                                        <span>
+                                                            Transcribe Audio
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={
+                                                    handleStopTranscription
+                                                }
+                                            >
+                                                <AiOutlineStop />{" "}
+                                                <span>Stop Transcribing</span>
+                                            </button>
+                                        </div>
+                                        <div className="form-group mt-5">
+                                            <textarea
+                                                id="textarea"
+                                                rows="6"
+                                                className="form-control"
+                                                value={transcript}
+                                                readOnly
+                                            ></textarea>
+                                        </div>
+                                        <div className="flex space-x-3 mt-3">
+                                            <button
+                                                className="btn  btn-secondary w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={downloadTranscript}
+                                            >
+                                                <BsDownload />{" "}
+                                                <span>Download Transcript</span>
+                                            </button>
+
+                                            <button
+                                                className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={resetTranscript}
+                                            >
+                                                <AiOutlineClear />{" "}
+                                                <span>Reset Transcript</span>
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <div className="flex space-x-5 mt-4 mb-4 items-center">
+                                                <h1 className="text-2xl font-bold">
+                                                    Regions List
+                                                </h1>
+                                                <button
+                                                    className="btn flex items-center space-x-1 bg-red-500 focus:bg-red-500 hover:bg-red-300 text-white"
+                                                    onClick={undoAction}
+                                                    disabled={
+                                                        undoActions.length === 0
+                                                    }
+                                                >
+                                                    <BiUndo /> <span>UNDO</span>
+                                                </button>
+                                                <button
+                                                    className="btn flex items-center space-x-1 bg-red-500 focus:bg-red-500 hover:bg-red-300 text-white"
+                                                    onClick={redoAction}
+                                                    disabled={
+                                                        useCut ||
+                                                        useReplace ||
+                                                        redoActions.length === 0
+                                                    }
+                                                >
+                                                    <BiRedo /> <span>REDO</span>
+                                                </button>
+                                            </div>
+
+                                            {/* Render the list of regions */}
+                                            <ul className="space-y-4">
+                                                {regions.map(
+                                                    (region, index) => (
+                                                        <li
+                                                            key={region.id}
+                                                            className="flex items-center"
+                                                        >
+                                                            <div
+                                                                style={{
+                                                                    backgroundColor:
+                                                                        region.color,
+                                                                    width: "60px",
+                                                                    height: "30px",
+                                                                    display:
+                                                                        "inline-block",
+                                                                    marginRight:
+                                                                        "5px",
+                                                                }}
+                                                            ></div>
+                                                            <span>
+                                                                {region.label}
+                                                            </span>
+                                                            <span className="space-x-2">
                                                                 <button
                                                                     className="btn bg-[#E09F3e] focus:bg-[#E09F3e] hover:bg-[#E09F3e]"
                                                                     onClick={() =>
-                                                                        replaceRecord(
-                                                                            region,
-                                                                            stream
+                                                                        handlePlayRegion(
+                                                                            region
                                                                         )
                                                                     }
                                                                 >
-                                                                    Record
+                                                                    Play
                                                                 </button>
-                                                                {isReplaceRecording ? (
-                                                                    <button
-                                                                        className="btn bg-red-500 focus:bg-red-500 hover:bg-red-300"
-                                                                        onClick={() =>
-                                                                            handleReplaceRecordStop()
-                                                                        }
-                                                                    >
-                                                                        Stop
-                                                                        Recording
-                                                                    </button>
-                                                                ) : (
-                                                                    <button
-                                                                        className="btn bg-red-500 focus:bg-red-500 hover:bg-red-300 text-white"
-                                                                        onClick={() =>
-                                                                            replaceImport(
-                                                                                region
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Import
-                                                                    </button>
-                                                                )}{" "}
                                                                 <button
                                                                     className="btn btn-secondary"
                                                                     onClick={() =>
-                                                                        setIsReplacing(
-                                                                            false
+                                                                        deleteRegion(
+                                                                            region
                                                                         )
                                                                     }
                                                                 >
-                                                                    Cancel
+                                                                    Delete
                                                                 </button>
-                                                            </>
-                                                        )}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
+                                                                <button
+                                                                    className="btn btn-secondary"
+                                                                    onClick={() =>
+                                                                        cutRegion(
+                                                                            region
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Cut
+                                                                </button>
+                                                                <button
+                                                                    className="btn bg-[#E09F3e] focus:bg-[#e09f3e86] hover:bg-[#E09F3e]"
+                                                                    onClick={() =>
+                                                                        handleReplaceFunction(
+                                                                            region
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Replace
+                                                                </button>
+                                                                {isReplacing &&
+                                                                    selectedRegion ===
+                                                                        region && (
+                                                                        <>
+                                                                            <button
+                                                                                className="btn bg-[#E09F3e] focus:bg-[#E09F3e] hover:bg-[#E09F3e]"
+                                                                                onClick={() =>
+                                                                                    replaceRecord(
+                                                                                        region,
+                                                                                        stream
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                Record
+                                                                            </button>
+                                                                            {isReplaceRecording ? (
+                                                                                <button
+                                                                                    className="btn bg-red-500 focus:bg-red-500 hover:bg-red-300"
+                                                                                    onClick={() =>
+                                                                                        handleReplaceRecordStop()
+                                                                                    }
+                                                                                >
+                                                                                    Stop
+                                                                                    Recording
+                                                                                </button>
+                                                                            ) : (
+                                                                                <button
+                                                                                    className="btn bg-red-500 focus:bg-red-500 hover:bg-red-300 text-white"
+                                                                                    onClick={() =>
+                                                                                        replaceImport(
+                                                                                            region
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    Import
+                                                                                </button>
+                                                                            )}{" "}
+                                                                            <button
+                                                                                className="btn btn-secondary"
+                                                                                onClick={() =>
+                                                                                    setIsReplacing(
+                                                                                        false
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                Cancel
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                            </span>
+                                                        </li>
+                                                    )
+                                                )}
+                                            </ul>
+                                        </div>{" "}
+                                    </>
+                                ) : (
+                                    <div className="text-center">
+                                        Start Recording or Upload an audio to
+                                        start editing.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>{" "}
