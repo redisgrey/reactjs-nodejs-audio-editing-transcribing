@@ -114,14 +114,20 @@ function SpeechToText() {
                         setWaveSurfer,
                         setPlaying,
                         setRegions,
-
                         audioFile
                     );
-
                     setRecording(true);
                     setAudioImported(true);
                 }
             };
+        };
+
+        request.onerror = (event) => {
+            console.log(
+                "An error occurred while opening the database:",
+                event.target.error
+            );
+            // Move on with other functionalities in your website
         };
     }, []);
 

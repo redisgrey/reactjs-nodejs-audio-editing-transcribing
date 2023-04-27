@@ -16,7 +16,7 @@ export const saveAudioToIndexedDB = async (audioBlob) => {
 
 export const openDatabase = () => {
     return new Promise((resolve, reject) => {
-        const request = window.indexedDB.open("myDatabase", 1);
+        const request = window.indexedDB.open("myDatabase", 2); // update the version number to 2
         request.onerror = () => {
             console.log("Failed to open database");
             reject();
