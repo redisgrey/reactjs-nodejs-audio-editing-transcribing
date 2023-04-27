@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { useSelector } from "react-redux";
 
@@ -34,6 +34,8 @@ import {
     handleReplaceRecordFunction,
     removeWaveform,
     bufferToWave,
+    loadAudioFromIndexedDB,
+    updateAudioInIndexedDB,
 } from "../js/audioFunctions";
 
 import NotFound from "./NotFound";
@@ -91,6 +93,37 @@ function SpeechToText() {
     const [recording, setRecording] = useState(false);
 
     const [audioImported, setAudioImported] = useState(false);
+
+    useEffect(() => {
+        // Check if there is an audio file saved in IndexedDB
+        const request = indexedDB.open("myDatabase");
+
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+
+            const transaction = db.transaction(["audio"], "readonly");
+            const objectStore = transaction.objectStore("audio");
+            const request = objectStore.get("audio-to-edit");
+
+            request.onsuccess = (event) => {
+                const audioFile = event.target.result;
+
+                if (audioFile) {
+                    // Load the audio file into WaveSurfer
+                    loadAudioFromIndexedDB(
+                        setWaveSurfer,
+                        setPlaying,
+                        setRegions,
+
+                        audioFile
+                    );
+
+                    setRecording(true);
+                    setAudioImported(true);
+                }
+            };
+        };
+    }, []);
 
     //* RECORDING START BUTTON
     const startRecording = () => {
@@ -182,6 +215,21 @@ function SpeechToText() {
         resetTranscript();
         setRecording(false);
         setAudioImported(false);
+
+        const request = indexedDB.open("myDatabase");
+
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction(["audio"], "readwrite");
+            const objectStore = transaction.objectStore("audio");
+            const request = objectStore.delete("audio-to-edit");
+            request.onsuccess = () => {
+                console.log("Audio removed from IndexedDB");
+            };
+            request.onerror = () => {
+                console.error("Error removing audio from IndexedDB");
+            };
+        };
     };
 
     const handlePlayPause = () => {
@@ -240,7 +288,8 @@ function SpeechToText() {
             waveSurfer,
             regions,
             setUndoActions,
-            undoActions
+            undoActions,
+            updateAudioInIndexedDB
         );
         setUseCut(true);
     };

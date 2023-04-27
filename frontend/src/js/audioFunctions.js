@@ -4,6 +4,127 @@ import TimelinePlugin from "wavesurfer.js/dist/plugin/wavesurfer.timeline.min.js
 
 import RegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions.min.js";
 
+export const saveAudioToIndexedDB = async (audioBlob) => {
+    const db = await openDatabase();
+    const tx = db.transaction("audio", "readwrite");
+    const store = tx.objectStore("audio");
+    const id = "audio-to-edit";
+    store.put(audioBlob, id);
+    await tx.complete;
+    console.log("Audio saved to IndexedDB with id:", id);
+};
+
+export const openDatabase = () => {
+    return new Promise((resolve, reject) => {
+        const request = window.indexedDB.open("myDatabase", 1);
+        request.onerror = () => {
+            console.log("Failed to open database");
+            reject();
+        };
+        request.onsuccess = () => {
+            console.log("Database opened successfully");
+            resolve(request.result);
+        };
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            const objectStore = db.createObjectStore("audio");
+        };
+    });
+};
+
+export const loadAudioFromIndexedDB = (
+    setWaveSurfer,
+    setPlaying,
+    setRegions
+) => {
+    // Open the database
+    const request = indexedDB.open("myDatabase");
+
+    request.onsuccess = (event) => {
+        const db = event.target.result;
+
+        // Retrieve the audio file from the object store
+        const transaction = db.transaction(["audio"], "readonly");
+        const objectStore = transaction.objectStore("audio");
+        const request = objectStore.get("audio-to-edit");
+
+        request.onsuccess = (event) => {
+            const audioFile = event.target.result;
+
+            // Create a new instance of WaveSurfer
+            const waveSurfer = WaveSurfer.create({
+                container: "#waveform",
+                waveColor: "violet",
+                progressColor: "purple",
+                plugins: [
+                    TimelinePlugin.create({
+                        container: "#timeline",
+                    }),
+                    RegionsPlugin.create({
+                        regionsMinLength: 0.5,
+                        dragSelection: {
+                            slop: 5,
+                        },
+                        // Use the color property to set the fill color of the region
+                        color: getRandomColor,
+                    }),
+                ],
+            });
+
+            // Add event listeners to the WaveSurfer instance
+            waveSurfer.on("region-created", (region) => {
+                setRegions((prevRegions) => [...prevRegions, region]);
+                // console.log("Region created:", region);
+                region.update({ color: getRandomColor()() });
+                // Perform any necessary processing or actions here
+            });
+
+            waveSurfer.on("region-updated", (region) => {
+                // Stop playback if a region is currently playing
+                if (waveSurfer.isPlaying()) {
+                    waveSurfer.pause();
+                }
+                setRegions((prevRegions) => {
+                    const index = prevRegions.findIndex(
+                        (r) => r.id === region.id
+                    );
+                    if (index === -1) return prevRegions;
+                    const updatedRegions = [...prevRegions];
+                    updatedRegions[index] = region;
+                    return updatedRegions;
+                });
+            });
+
+            waveSurfer.on("region-removed", (region) => {
+                setRegions((prevRegions) =>
+                    prevRegions.filter((r) => r.id !== region.id)
+                );
+            });
+
+            // Load the audio buffer into WaveSurfer
+            waveSurfer.loadBlob(audioFile);
+
+            // Set the WaveSurfer instance to state
+            setWaveSurfer(waveSurfer);
+
+            // Set initial playing state to false
+            setPlaying(false);
+        };
+    };
+};
+
+export const updateAudioInIndexedDB = async (updatedAudioBlob) => {
+    const db = await openDatabase();
+    const tx = db.transaction("audio", "readwrite");
+    const store = tx.objectStore("audio");
+    const id = "audio-to-edit";
+    let audioFile = await store.get(id);
+    audioFile = updatedAudioBlob;
+    store.put(audioFile, id);
+    await tx.complete;
+    console.log("Audio updated in IndexedDB with id:", id);
+};
+
 //* RECORDING START BUTTON
 export const recordStart = (
     stream,
@@ -59,6 +180,7 @@ export const recordStop = (
     mediaRecorder.current.onstop = () => {
         const audioBlob = new Blob(audioChunks, { type: mimeType });
 
+        saveAudioToIndexedDB(audioBlob);
         const reader = new FileReader();
         reader.onload = (event) => {
             const arrayBuffer = event.target.result;
@@ -182,6 +304,7 @@ export const handleFileChange = (
             type: file.type,
         });
         setAudioChunks([audioBlob]);
+        saveAudioToIndexedDB(audioBlob);
         const arrayBuffer = event.target.result;
         const audioContext = new AudioContext();
         audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
@@ -560,6 +683,12 @@ export const handleCutRegion = (
         originalBuffer: originalBuffer,
     };
     setUndoActions([...undoActions, action]);
+
+    // Update the audio in IndexedDB
+    const updatedAudioBlob = new Blob([newBuffer.getChannelData(0)], {
+        type: "audio/mpeg",
+    });
+    updateAudioInIndexedDB(updatedAudioBlob);
 };
 
 export const handleReplaceImportFunction = (
