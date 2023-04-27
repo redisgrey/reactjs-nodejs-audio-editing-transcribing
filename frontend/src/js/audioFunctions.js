@@ -835,7 +835,7 @@ export const handleReplaceRecordFunction = (
 
     console.log("replace record start");
 
-    // Add cut action to undoActions array
+    // Add replace action to undoActions array
     const action = {
         type: "REPLACE_REGION",
         region,

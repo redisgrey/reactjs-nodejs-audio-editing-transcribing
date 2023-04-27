@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { useSelector } from "react-redux";
 
@@ -15,17 +15,24 @@ function TTS() {
 
     const [value, setValue] = useState("");
 
-    const [textURL, setTextURL] = useState(null);
+    const [voices, setVoices] = useState([]);
 
-    const setValueDownload = (e) => {
-        setValue(e.target.value);
+    const [selectedVoice, setSelectedVoice] = useState(null);
 
-        const textBlob = new Blob([e.target.value], { type: "text/plain" });
+    useEffect(() => {
+        const availableVoices = window.speechSynthesis
+            .getVoices()
+            .filter((voice) => voice.name.includes("Microsoft"));
+        setVoices(availableVoices);
+        setSelectedVoice(availableVoices[0]);
+    }, []);
 
-        const textDownloadURL = URL.createObjectURL(textBlob);
-
-        setTextURL(textDownloadURL);
+    const handleVoiceChange = (event) => {
+        const voiceName = event.target.value;
+        const selectedVoice = voices.find((voice) => voice.name === voiceName);
+        setSelectedVoice(selectedVoice);
     };
+
     return (
         <>
             {user ? (
@@ -39,7 +46,7 @@ function TTS() {
                                     rows="10"
                                     className="form-control"
                                     value={value}
-                                    onChange={setValueDownload}
+                                    onChange={(e) => setValue(e.target.value)}
                                     placeholder="Enter your text here..."
                                 ></textarea>
                             </div>
@@ -52,21 +59,28 @@ function TTS() {
                                 >
                                     <RxReset /> <span>Reset Transcript</span>
                                 </button>
-                                <a
-                                    className="flex items-center w-50 justify-center space-x-2 text-white btn bg-red-500 hover:bg-red-300 px-5 py-2 rounded-lg"
-                                    href={textURL}
-                                    download
-                                >
-                                    <BsDownload />{" "}
-                                    <span>Download Transcript</span>
-                                </a>
                             </div>
                         </div>
+
                         <div className="mt-10 container p-5 bg-gray-400">
                             <h1 className="font-bold text-3xl text-center">
-                                Check your transcript here.
+                                Check your generated audio here.
                             </h1>
+                            <div className="flex justify-center my-4">
+                                <select onChange={handleVoiceChange}>
+                                    {voices.map((voice) => (
+                                        <option
+                                            key={voice.name}
+                                            value={voice.name}
+                                        >
+                                            {voice.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <TextToSpeech
+                                voice={selectedVoice}
                                 align="horizontal"
                                 allowMuting
                                 markBackgroundColor="#E09F3E"
