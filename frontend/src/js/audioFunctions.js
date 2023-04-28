@@ -655,14 +655,6 @@ export const handleCutRegion = async (
     newBuffer.getChannelData(1).set(rightEndBuffer, startOffset);
     waveSurfer.backend.buffer = newBuffer;
 
-    // Create a new Blob object from the newBuffer object
-    const newAudioBlob = new Blob([newBuffer.getChannelData(0)], {
-        type: "audio/mpeg",
-    });
-    console.log("newAudioBlob: ", newAudioBlob);
-    // Update the audio in the IndexedDB
-    await saveAudioToIndexedDB(newAudioBlob);
-
     // Remove the cut region from the list and the waveform
     const index = regions.findIndex((reg) => reg.id === region.id);
     regions.splice(index, 1);

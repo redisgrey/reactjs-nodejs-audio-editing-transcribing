@@ -29,4 +29,6 @@ app.use(express.urlencoded({ extended: true }));
 // * ROUTES
 app.use("/api/users", require("./backend/routes/userRoutes"));
 
+app.use("/api/text-to-speech", require("./backend/routes/textToSpeech"));
+
 app.listen(PORT, () => console.log(`Server running at PORT ${PORT}`));
