@@ -6,14 +6,14 @@ import { RxReset } from "react-icons/rx";
 
 import NotFound from "./NotFound";
 
+import { TextToSpeech } from "tts-react";
+
 function TTS() {
     const { user } = useSelector((state) => state.auth);
 
     const [value, setValue] = useState("");
 
-    const [audioElement, setAudioElement] = useState(null);
-
-    const generateAudio = (text) => {
+    const generateAndDownloadAudio = (text) => {
         const endpoint = `http://localhost:5000/api/text-to-speech?text=${value}`;
         fetch(endpoint)
             .then((response) => {
@@ -27,10 +27,9 @@ function TTS() {
             .then((buffer) => {
                 const blob = new Blob([buffer], { type: "audio/mpeg" });
                 console.log(blob);
-                const newAudioElement = document.createElement("audio");
-                newAudioElement.src = URL.createObjectURL(blob);
+                const url = URL.createObjectURL(blob);
 
-                setAudioElement(newAudioElement);
+                download(url);
             })
             .catch((error) => {
                 console.error("Error fetching audio:", error);
@@ -68,41 +67,51 @@ function TTS() {
                                 ></textarea>
                             </div>
 
-                            <div className="form-group w-[80%] m-auto d-flex justify-content-around text-center mt-3">
+                            <div className="form-group w-[80%] mb-3 m-auto d-flex justify-content-around text-center mt-3">
                                 <button
                                     className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
-                                    onClick={() => generateAudio(value)}
-                                >
-                                    Generate Audio
-                                </button>
-
-                                <button
-                                    className="btn bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
-                                    onClick={() => download(audioElement.src)}
-                                    disabled={audioElement ? false : true}
+                                    onClick={() =>
+                                        generateAndDownloadAudio(value)
+                                    }
+                                    disabled={value === ""}
                                 >
                                     Download Audio
                                 </button>
+
                                 <button
                                     id="resetBtn"
                                     className="btn btn-danger w-50 me-4 space-x-2 flex justify-center items-center"
                                     onClick={() => {
                                         setValue("");
-                                        setAudioElement(null);
                                     }}
                                 >
                                     <RxReset /> <span>Reset Transcript</span>
                                 </button>
                             </div>
-                            <div className="mt-3 ">
-                                {audioElement && (
-                                    <audio
-                                        controls
-                                        style={{ width: "100%" }}
-                                        src={audioElement.src}
-                                    />
-                                )}
-                            </div>
+
+                            <TextToSpeech
+                                align="horizontal"
+                                allowMuting
+                                markBackgroundColor="#E09F3E"
+                                markColor="white"
+                                markTextAsSpoken
+                                onBoundary={function noRefCheck() {}}
+                                onEnd={function noRefCheck() {}}
+                                onError={function noRefCheck() {}}
+                                onPause={function noRefCheck() {}}
+                                onPitchChange={function noRefCheck() {}}
+                                onRateChange={function noRefCheck() {}}
+                                onStart={function noRefCheck() {}}
+                                onVolumeChange={function noRefCheck() {}}
+                                position="topCenter"
+                                rate={1}
+                                size="large"
+                                volume={1}
+                            >
+                                <div>
+                                    <p>{value}</p>
+                                </div>
+                            </TextToSpeech>
                         </div>
                     </div>{" "}
                 </>
