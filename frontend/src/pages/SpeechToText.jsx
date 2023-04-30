@@ -101,26 +101,30 @@ function SpeechToText() {
         request.onsuccess = (event) => {
             const db = event.target.result;
 
-            const transaction = db.transaction(["audio"], "readonly");
-            const objectStore = transaction.objectStore("audio");
-            const request = objectStore.get("audio-to-edit");
+            if (db.objectStoreNames.contains("audio")) {
+                const transaction = db.transaction(["audio"], "readonly");
+                const objectStore = transaction.objectStore("audio");
+                const request = objectStore.get("audio-to-edit");
 
-            request.onsuccess = (event) => {
-                const audioFile = event.target.result;
+                request.onsuccess = (event) => {
+                    const audioFile = event.target.result;
 
-                if (audioFile) {
-                    // Load the audio file into WaveSurfer
-                    loadAudioFromIndexedDB(
-                        setWaveSurfer,
-                        setPlaying,
-                        setRegions,
-                        sliderRef,
-                        userId
-                    );
-                    setRecording(true);
-                    setAudioImported(true);
-                }
-            };
+                    if (audioFile) {
+                        // Load the audio file into WaveSurfer
+                        loadAudioFromIndexedDB(
+                            setWaveSurfer,
+                            setPlaying,
+                            setRegions,
+                            sliderRef,
+                            userId
+                        );
+                        setRecording(true);
+                        setAudioImported(true);
+                    }
+                };
+            } else {
+                // Move on with other functionalities in your website
+            }
         };
 
         request.onerror = (event) => {
@@ -131,7 +135,6 @@ function SpeechToText() {
             // Move on with other functionalities in your website
         };
     }, []);
-
     //* RECORDING START BUTTON
     const startRecording = () => {
         navigator.mediaDevices

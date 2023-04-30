@@ -46,6 +46,10 @@ export const loadAudioFromIndexedDB = (
     // Open the database
     const request = indexedDB.open(`myDatabase-${userId}`); // include the user ID in the database name
 
+    request.onerror = (event) => {
+        console.log("Error opening database:", event.target.error);
+    };
+
     request.onsuccess = (event) => {
         const db = event.target.result;
 
