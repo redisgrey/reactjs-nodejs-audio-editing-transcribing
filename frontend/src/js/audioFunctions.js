@@ -41,7 +41,9 @@ export const loadAudioFromIndexedDB = (
     setPlaying,
     setRegions,
     sliderRef,
-    userId
+    userId,
+    setIsTranscribing,
+    handleStopTranscription
 ) => {
     // Open the database
     const request = indexedDB.open(`myDatabase-${userId}`); // include the user ID in the database name
@@ -113,6 +115,13 @@ export const loadAudioFromIndexedDB = (
                 );
             });
 
+            waveSurfer.on("finish", function () {
+                console.log("finished playing");
+                setPlaying(false);
+                setIsTranscribing(false);
+                handleStopTranscription();
+            });
+
             sliderRef.current.oninput = function () {
                 waveSurfer.zoom(Number(this.value));
             };
@@ -177,7 +186,9 @@ export const recordStop = (
     setWaveSurfer,
     setPlaying,
     sliderRef,
-    setRegions
+    setRegions,
+    setIsTranscribing,
+    handleStopTranscription
 ) => {
     setIsRecording(false);
 
@@ -245,6 +256,13 @@ export const recordStop = (
                     );
                 });
 
+                waveSurfer.on("finish", function () {
+                    console.log("finished playing");
+                    setPlaying(false);
+                    setIsTranscribing(false);
+                    handleStopTranscription();
+                });
+
                 sliderRef.current.oninput = function () {
                     waveSurfer.zoom(Number(this.value));
                 };
@@ -288,7 +306,9 @@ export const handleFileChange = (
     setWaveSurfer,
     setPlaying,
     sliderRef,
-    setRegions
+    setRegions,
+    setIsTranscribing,
+    handleStopTranscription
 ) => {
     const file = event.target.files[0];
 
@@ -369,6 +389,13 @@ export const handleFileChange = (
                 setRegions((prevRegions) =>
                     prevRegions.filter((r) => r.id !== region.id)
                 );
+            });
+
+            waveSurfer.on("finish", function () {
+                console.log("finished playing");
+                setPlaying(false);
+                setIsTranscribing(false);
+                handleStopTranscription();
             });
 
             sliderRef.current.oninput = function () {

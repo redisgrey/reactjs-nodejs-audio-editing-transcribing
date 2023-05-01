@@ -116,7 +116,9 @@ function SpeechToText() {
                             setPlaying,
                             setRegions,
                             sliderRef,
-                            userId
+                            userId,
+                            setIsTranscribing,
+                            handleStopTranscription
                         );
                         setRecording(true);
                         setAudioImported(true);
@@ -163,7 +165,9 @@ function SpeechToText() {
             setWaveSurfer,
             setPlaying,
             sliderRef,
-            setRegions
+            setRegions,
+            setIsTranscribing,
+            handleStopTranscription
         );
         setRecording(true);
     };
@@ -180,7 +184,9 @@ function SpeechToText() {
             setWaveSurfer,
             setPlaying,
             sliderRef,
-            setRegions
+            setRegions,
+            setIsTranscribing,
+            handleStopTranscription
         );
         setAudioImported(true);
     };
@@ -194,6 +200,7 @@ function SpeechToText() {
             interimResults: true,
         });
         setIsTranscribing(true);
+        handleRestart();
     };
 
     const handleStopTranscription = () => {
@@ -440,6 +447,11 @@ function SpeechToText() {
                                             <button
                                                 className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
                                                 onClick={handlePlayPause}
+                                                disabled={
+                                                    isTranscribing
+                                                        ? true
+                                                        : false
+                                                }
                                             >
                                                 {playing ? (
                                                     <>
@@ -456,18 +468,14 @@ function SpeechToText() {
                                             <button
                                                 className="btn mt-5 bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
                                                 onClick={handleRestart}
+                                                disabled={
+                                                    isTranscribing
+                                                        ? true
+                                                        : false
+                                                }
                                             >
                                                 <VscDebugRestart />{" "}
                                                 <span>Restart</span>
-                                            </button>
-                                            <button
-                                                className="btn mt-5 btn-secondary w-50 me-4 space-x-2 flex justify-center items-center"
-                                                onClick={() =>
-                                                    handleDownload(waveSurfer)
-                                                }
-                                            >
-                                                <BsDownload />{" "}
-                                                <span>Download Audio</span>
                                             </button>
                                             <button
                                                 className="btn mt-5 bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
@@ -478,9 +486,14 @@ function SpeechToText() {
                                                         setRegions
                                                     )
                                                 }
+                                                disabled={
+                                                    isTranscribing
+                                                        ? true
+                                                        : false
+                                                }
                                             >
                                                 <AiOutlineClear />{" "}
-                                                <span>Reset</span>
+                                                <span>Start New Project</span>
                                             </button>
                                         </div>
                                         <div className="flex space-x-3">
@@ -521,14 +534,26 @@ function SpeechToText() {
                                                     </>
                                                 )}
                                             </button>
-                                            <button
+                                            {/* <button
                                                 className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
                                                 onClick={
                                                     handleStopTranscription
                                                 }
                                             >
                                                 <AiOutlineStop />{" "}
-                                                <span>Stop Transcribing</span>
+                                                <span>Cancel Transcribing</span>
+                                            </button> */}
+                                            <button
+                                                className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={resetTranscript}
+                                                disabled={
+                                                    isTranscribing
+                                                        ? true
+                                                        : false
+                                                }
+                                            >
+                                                <AiOutlineClear />{" "}
+                                                <span>Clear Transcript</span>
                                             </button>
                                         </div>
                                         <div className="form-group mt-5">
@@ -542,19 +567,31 @@ function SpeechToText() {
                                         </div>
                                         <div className="flex space-x-3 mt-3">
                                             <button
-                                                className="btn  btn-secondary w-50 me-4 space-x-2 flex justify-center items-center"
+                                                className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
                                                 onClick={downloadTranscript}
+                                                disabled={
+                                                    isTranscribing
+                                                        ? true
+                                                        : false
+                                                }
                                             >
                                                 <BsDownload />{" "}
                                                 <span>Download Transcript</span>
                                             </button>
 
                                             <button
-                                                className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
-                                                onClick={resetTranscript}
+                                                className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
+                                                onClick={() =>
+                                                    handleDownload(waveSurfer)
+                                                }
+                                                disabled={
+                                                    isTranscribing
+                                                        ? true
+                                                        : false
+                                                }
                                             >
-                                                <AiOutlineClear />{" "}
-                                                <span>Reset Transcript</span>
+                                                <BsDownload />{" "}
+                                                <span>Download Audio</span>
                                             </button>
                                         </div>
                                         <div>
