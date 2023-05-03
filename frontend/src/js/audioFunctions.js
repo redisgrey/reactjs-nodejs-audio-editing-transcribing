@@ -402,6 +402,7 @@ export const handleFileChange = (
                 waveSurfer.zoom(Number(this.value));
             };
 
+            console.log("audioBuffer: ", audioBuffer);
             // Load the audio buffer into WaveSurfer
             waveSurfer.loadDecodedBuffer(audioBuffer);
 
@@ -664,26 +665,25 @@ export const handleCutRegion = async (
     const startOffset = parseInt(cutFrom * rate);
     const endOffset = parseInt(cutTo * rate);
 
-    const leftBuffer = originalBuffer.getChannelData(0).slice(0, startOffset);
-    const rightBuffer =
-        originalBuffer.numberOfChannels > 1
-            ? originalBuffer.getChannelData(1).slice(0, startOffset)
-            : new Float32Array(leftBuffer.length).fill(0);
+    // Create a new buffer with the same number of channels and sample rate as the original buffer
     const newBuffer = waveSurfer.backend.ac.createBuffer(
-        2,
-        startOffset + originalBuffer.length - endOffset,
+        originalBuffer.numberOfChannels,
+        originalBuffer.length - (endOffset - startOffset),
         rate
     );
-    newBuffer.getChannelData(0).set(leftBuffer);
-    newBuffer.getChannelData(1).set(rightBuffer);
 
-    const leftEndBuffer = originalBuffer.getChannelData(0).slice(endOffset);
-    const rightEndBuffer =
-        originalBuffer.numberOfChannels > 1
-            ? originalBuffer.getChannelData(1).slice(endOffset)
-            : new Float32Array(leftEndBuffer.length).fill(0);
-    newBuffer.getChannelData(0).set(leftEndBuffer, startOffset);
-    newBuffer.getChannelData(1).set(rightEndBuffer, startOffset);
+    // Copy the original buffer's data to the new buffer
+    for (let i = 0; i < originalBuffer.numberOfChannels; i++) {
+        const channelData = originalBuffer.getChannelData(i);
+
+        // Copy the part of the data before the cut
+        const leftBuffer = channelData.slice(0, startOffset);
+        newBuffer.getChannelData(i).set(leftBuffer);
+
+        // Copy the part of the data after the cut
+        const rightBuffer = channelData.slice(endOffset);
+        newBuffer.getChannelData(i).set(rightBuffer, startOffset);
+    }
     waveSurfer.backend.buffer = newBuffer;
 
     // Remove the cut region from the list and the waveform

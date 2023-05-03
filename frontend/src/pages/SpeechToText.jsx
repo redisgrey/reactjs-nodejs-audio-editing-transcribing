@@ -369,6 +369,7 @@ function SpeechToText() {
     const downloadAudio = (waveSurfer) => {
         // Get the modified audio buffer
         const modifiedBuffer = waveSurfer.backend.buffer;
+        console.log("modifiedBuffer: ", modifiedBuffer);
 
         // Create a new blob with the audio data
         const audioBlob = bufferToWave(modifiedBuffer);
