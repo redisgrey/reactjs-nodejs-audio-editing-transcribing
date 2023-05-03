@@ -1004,36 +1004,59 @@ export const handleReplaceRecordFunction = (
 };
 
 export function bufferToWave(abuffer) {
-    const numOfChan = abuffer.numberOfChannels;
-    const length = abuffer.length * numOfChan * 2 + 44;
-    const buffer = new ArrayBuffer(length);
-    const view = new DataView(buffer);
+    var numOfChan = abuffer.numberOfChannels,
+        length = abuffer.length * numOfChan * 2 + 44,
+        buffer = new ArrayBuffer(length),
+        view = new DataView(buffer),
+        channels = [],
+        i,
+        sample,
+        offset = 0,
+        pos = 0;
 
-    writeString(view, 0, "RIFF");
-    view.setUint32(4, length - 8, true);
-    writeString(view, 8, "WAVE");
-    writeString(view, 12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, numOfChan, true);
-    view.setUint32(24, abuffer.sampleRate, true);
-    view.setUint32(28, abuffer.sampleRate * 4, true);
-    view.setUint16(32, numOfChan * 2, true);
-    view.setUint16(34, 16, true);
-    writeString(view, 36, "data");
-    view.setUint32(40, length - 44, true);
+    // write WAVE header
+    setUint32(0x46464952); // "RIFF"
+    setUint32(length - 8); // file length - 8
+    setUint32(0x45564157); // "WAVE"
 
-    floatTo16BitPCM(view, 44, abuffer.getChannelData(0));
+    setUint32(0x20746d66); // "fmt " chunk
+    setUint32(16); // length = 16
+    setUint16(1); // PCM (uncompressed)
+    setUint16(numOfChan);
+    setUint32(abuffer.sampleRate);
+    setUint32(abuffer.sampleRate * 2 * numOfChan); // avg. bytes/sec
+    setUint16(numOfChan * 2); // block-align
+    setUint16(16); // 16-bit (hardcoded in this demo)
 
-    if (numOfChan === 2) {
-        floatTo16BitPCM(
-            view,
-            44 + abuffer.length * 2,
-            abuffer.getChannelData(1)
-        );
+    setUint32(0x61746164); // "data" - chunk
+    setUint32(length - pos - 4); // chunk length
+
+    // write interleaved data
+    for (i = 0; i < abuffer.numberOfChannels; i++)
+        channels.push(abuffer.getChannelData(i));
+    while (pos < length) {
+        for (i = 0; i < numOfChan; i++) {
+            // interleave channels
+            sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
+            sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0; // convert to 16-bit integer
+            view.setInt16(pos, sample, true); // write 16-bit sample
+            pos += 2;
+        }
+        offset++; // next source sample
     }
 
-    return new Blob([view], { type: "audio/wav" });
+    // helper functions
+    function setUint16(data) {
+        view.setUint16(pos, data, true);
+        pos += 2;
+    }
+
+    function setUint32(data) {
+        view.setUint32(pos, data, true);
+        pos += 4;
+    }
+
+    return new Blob([buffer], { type: "audio/wav" });
 }
 
 function floatTo16BitPCM(output, offset, input) {
