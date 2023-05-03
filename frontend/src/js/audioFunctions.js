@@ -708,6 +708,10 @@ export const handleCutRegion = async (
         });
     });
 
+    const audioBlob = bufferToWave(newBuffer);
+
+    saveAudioToIndexedDB(audioBlob);
+
     // Add cut action to undoActions array
     const action = {
         type: "CUT_REGION",
