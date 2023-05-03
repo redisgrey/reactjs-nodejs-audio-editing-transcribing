@@ -544,6 +544,10 @@ export const undo = (
                 }
                 waveSurfer.backend.buffer = newBuffer;
 
+                const audioBlob = bufferToWave(newBuffer);
+
+                saveAudioToIndexedDB(audioBlob);
+
                 // Add cut region back to WaveSurfer and update regions list
                 waveSurfer.addRegion(lastAction.region);
                 const newRegions = regions
@@ -574,6 +578,10 @@ export const undo = (
 
                 // Restore original buffer
                 waveSurfer.backend.buffer = replaceOriginalBuffer;
+
+                const replaceAudioBlob = bufferToWave(replaceOriginalBuffer);
+
+                saveAudioToIndexedDB(replaceAudioBlob);
 
                 // Add cut region back to WaveSurfer and update regions list
                 waveSurfer.addRegion(lastAction.region);
