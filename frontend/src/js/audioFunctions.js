@@ -811,6 +811,10 @@ export const handleReplaceImportFunction = (
 
                     waveSurfer.backend.buffer = newBuffer;
 
+                    const audioBlob = bufferToWave(newBuffer);
+
+                    saveAudioToIndexedDB(audioBlob);
+
                     // Remove the replaced region from the list and the waveform
                     const index = regions.findIndex(
                         (reg) => reg.id === region.id
@@ -952,6 +956,10 @@ export const handleReplaceRecordFunction = (
             }
 
             waveSurfer.backend.buffer = newBuffer;
+
+            const audioBlob = bufferToWave(newBuffer);
+
+            saveAudioToIndexedDB(audioBlob);
 
             // Remove the replaced region from the list and the waveform
             const index = regions.findIndex((reg) => reg.id === region.id);
