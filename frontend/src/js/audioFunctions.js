@@ -458,6 +458,10 @@ export const transcribeAudio = async (
         const wordSpan = document.createElement("span");
         wordSpan.textContent = word + " "; // add space after each word to separate them
 
+        // set data attribute with region id
+        const regionId = `region-${index}`;
+        wordSpan.setAttribute("data-region-id", regionId);
+
         // set up event listener to trigger corresponding region
         wordSpan.addEventListener("click", () => {
             const start = result.timestamps[index].start;
@@ -470,7 +474,7 @@ export const transcribeAudio = async (
                 start: start,
                 end: end,
                 color: "rgba(255, 0, 0, 0.3)",
-                index: index,
+                id: regionId,
             });
 
             waveSurfer.on("region-updated", (region) => {
@@ -738,6 +742,12 @@ export const handleDeleteRegion = async (
         setCurrentRegion(null);
     }
     await waveSurfer.regions.list[region.id].remove();
+
+    // reset background color of corresponding word
+    const word = document.querySelector(`[data-region-id="${region.id}"]`);
+    if (word) {
+        word.style.backgroundColor = "";
+    }
     // Add delete action to undoActions array
     const action = { type: "DELETE_REGION", region, color: originalColor };
     setUndoActions([...undoActions, action]);
