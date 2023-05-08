@@ -548,7 +548,10 @@ function SpeechToText() {
                                                         setTranscription,
                                                         setTimestamps,
                                                         waveSurfer,
-                                                        timestamps
+                                                        regions,
+                                                        setUndoActions,
+                                                        undoActions,
+                                                        setAudioFile
                                                     )
                                                 }
                                             >
@@ -588,15 +591,7 @@ function SpeechToText() {
                                         <div
                                             id="transcript"
                                             className="form-group mt-5"
-                                        >
-                                            {/* <textarea
-                                                id="textarea"
-                                                rows="6"
-                                                className="form-control"
-                                                value={transcription}
-                                                readOnly
-                                            ></textarea> */}
-                                        </div>
+                                        ></div>
                                         <div className="flex space-x-3 mt-3">
                                             <button
                                                 className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"

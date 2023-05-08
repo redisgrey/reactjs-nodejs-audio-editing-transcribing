@@ -429,7 +429,11 @@ export const transcribeAudio = async (
     audioFile,
     setTranscription,
     setTimestamps,
-    waveSurfer
+    waveSurfer,
+    regions,
+    setUndoActions,
+    undoActions,
+    setAudioFile
 ) => {
     // Create a FormData object with the audio file
     const formData = new FormData();
@@ -495,6 +499,34 @@ export const transcribeAudio = async (
 
             // style the clicked word with a background color
             wordSpan.style.backgroundColor = region.color;
+
+            // add delete button to word span
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "X";
+            deleteButton.classList.add("delete-button");
+            deleteButton.addEventListener("click", (event) => {
+                event.stopPropagation(); // prevent click event from triggering word click event
+                const region = waveSurfer.regions.list[regionId];
+                if (region) {
+                    handleCutRegion(
+                        region,
+                        waveSurfer,
+                        regions,
+                        setUndoActions,
+                        undoActions,
+                        setAudioFile
+                    );
+                }
+                // remove the word span from the transcription
+                wordSpan.remove();
+                // update the timestamps in the state
+                setTimestamps((timestamps) => {
+                    const newTimestamps = [...timestamps];
+                    newTimestamps.splice(index, 1);
+                    return newTimestamps;
+                });
+            });
+            wordSpan.appendChild(deleteButton);
         });
 
         transcriptDiv.appendChild(wordSpan); // add word element to transcript container
