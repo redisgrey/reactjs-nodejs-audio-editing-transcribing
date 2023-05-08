@@ -43,7 +43,6 @@ export const loadAudioFromIndexedDB = (
     sliderRef,
     userId,
     setIsTranscribing,
-    handleStopTranscription,
     setAudioFile
 ) => {
     // Open the database
@@ -119,8 +118,6 @@ export const loadAudioFromIndexedDB = (
             waveSurfer.on("finish", function () {
                 console.log("finished playing");
                 setPlaying(false);
-                setIsTranscribing(false);
-                handleStopTranscription();
             });
 
             sliderRef.current.oninput = function () {
@@ -189,10 +186,7 @@ export const recordStop = (
     setWaveSurfer,
     setPlaying,
     sliderRef,
-    setRegions,
-    setIsTranscribing,
-    handleStopTranscription,
-    setAudioFile
+    setRegions
 ) => {
     setIsRecording(false);
 
@@ -203,7 +197,6 @@ export const recordStop = (
 
         saveAudioToIndexedDB(audioBlob);
 
-        setAudioFile(audioBlob);
         const reader = new FileReader();
         reader.onload = (event) => {
             const arrayBuffer = event.target.result;
@@ -265,8 +258,6 @@ export const recordStop = (
                 waveSurfer.on("finish", function () {
                     console.log("finished playing");
                     setPlaying(false);
-                    setIsTranscribing(false);
-                    handleStopTranscription();
                 });
 
                 sliderRef.current.oninput = function () {
@@ -312,10 +303,7 @@ export const handleFileChange = (
     setWaveSurfer,
     setPlaying,
     sliderRef,
-    setRegions,
-    setIsTranscribing,
-    handleStopTranscription,
-    setAudioFile
+    setRegions
 ) => {
     const file = event.target.files[0];
 
@@ -339,7 +327,7 @@ export const handleFileChange = (
         setAudioChunks([audioBlob]);
         console.log("audioBlob import: ", audioBlob);
         saveAudioToIndexedDB(audioBlob);
-        setAudioFile(audioBlob);
+
         const arrayBuffer = event.target.result;
         const audioContext = new AudioContext();
         audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
@@ -402,8 +390,6 @@ export const handleFileChange = (
             waveSurfer.on("finish", function () {
                 console.log("finished playing");
                 setPlaying(false);
-                setIsTranscribing(false);
-                handleStopTranscription();
             });
 
             sliderRef.current.oninput = function () {
@@ -433,8 +419,15 @@ export const transcribeAudio = async (
     regions,
     setUndoActions,
     undoActions,
-    setAudioFile
+    setAudioFile,
+    setIsTranscribing
 ) => {
+    const transcriptDivToClear = document.getElementById("transcript");
+    transcriptDivToClear.innerHTML = ""; // Remove all the child elements of transcriptDiv
+    setTranscription(null); // Reset the transcription state to null
+    setTimestamps([]); // Reset the timestamps state to an empty array
+
+    setIsTranscribing(true);
     // Create a FormData object with the audio file
     const formData = new FormData();
 
@@ -454,7 +447,7 @@ export const transcribeAudio = async (
     // Set the transcription and timestamps in the state
     setTranscription(result.transcription);
     setTimestamps(result.timestamps);
-
+    setIsTranscribing(false);
     const transcriptDiv = document.getElementById("transcript");
     const words = result.transcription.split(" "); // split the transcription into words
 
@@ -574,6 +567,7 @@ export const undo = (
                 );
                 if (word) {
                     word.style.backgroundColor = lastAction.wordBgColor;
+                    word.appendChild(lastAction.deleteButton);
                 }
 
                 // Update keys for regions list
@@ -799,9 +793,11 @@ export const handleDeleteRegion = async (
 
     await waveSurfer.regions.list[region.id].remove();
 
+    const deleteButton = document.querySelector(".delete-button");
     // reset background color of corresponding word
     if (word) {
         word.style.backgroundColor = "";
+        word.removeChild(deleteButton);
     }
     // Add delete action to undoActions array
     const action = {
@@ -809,6 +805,7 @@ export const handleDeleteRegion = async (
         region,
         color: originalColor,
         wordBgColor,
+        deleteButton,
     };
     setUndoActions([...undoActions, action]);
 };

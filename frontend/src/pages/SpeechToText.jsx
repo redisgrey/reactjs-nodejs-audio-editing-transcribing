@@ -125,7 +125,6 @@ function SpeechToText() {
                             sliderRef,
                             userId,
                             setIsTranscribing,
-                            handleStopTranscription,
                             setAudioFile
                         );
                         setRecording(true);
@@ -176,7 +175,6 @@ function SpeechToText() {
             sliderRef,
             setRegions,
             setIsTranscribing,
-            handleStopTranscription,
             setAudioFile
         );
         setRecording(true);
@@ -196,36 +194,18 @@ function SpeechToText() {
             sliderRef,
             setRegions,
             setIsTranscribing,
-            handleStopTranscription,
             setAudioFile
         );
         setAudioImported(true);
     };
 
-    const { resetTranscript, transcript } = useSpeechRecognition();
-
-    const handleTranscription = () => {
-        SpeechRecognition.startListening({
-            continuous: true,
-            language: "en-US",
-            interimResults: true,
-        });
-        setIsTranscribing(true);
-        handleRestart();
-    };
-
-    const handleStopTranscription = () => {
-        SpeechRecognition.stopListening();
-        setIsTranscribing(false);
-    };
-
     const downloadTranscript = () => {
-        if (transcript.trim() === "") {
+        if (transcription === null) {
             alert("Transcript is empty!");
             return;
         }
         const element = document.createElement("a");
-        const file = new Blob([transcript], { type: "text/plain" });
+        const file = new Blob([transcription], { type: "text/plain" });
         const now = new Date();
         const dateString = now.toLocaleDateString();
         const timeString = now
@@ -236,6 +216,13 @@ function SpeechToText() {
         element.download = filename;
         document.body.appendChild(element); // Required for this to work in FireFox
         element.click();
+    };
+
+    const resetTranscript = () => {
+        const transcriptDiv = document.getElementById("transcript");
+        transcriptDiv.innerHTML = ""; // Remove all the child elements of transcriptDiv
+        setTranscription(null); // Reset the transcription state to null
+        setTimestamps([]); // Reset the timestamps state to an empty array
     };
 
     const resetWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
@@ -551,7 +538,8 @@ function SpeechToText() {
                                                         regions,
                                                         setUndoActions,
                                                         undoActions,
-                                                        setAudioFile
+                                                        setAudioFile,
+                                                        setIsTranscribing
                                                     )
                                                 }
                                             >
