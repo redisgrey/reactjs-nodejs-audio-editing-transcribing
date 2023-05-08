@@ -717,6 +717,15 @@ export const redo = (redoActions, regions, waveSurfer, undoActions) => {
                 );
                 regions.splice(index, 1);
                 waveSurfer.regions.list[lastAction.region.id].remove();
+
+                // Restore background color of corresponding word
+                const word = document.querySelector(
+                    `[data-region-id="${lastAction.region.id}"]`
+                );
+                if (word) {
+                    word.style.backgroundColor = "";
+                }
+
                 break;
 
             // case "REPLACE_REGION":
