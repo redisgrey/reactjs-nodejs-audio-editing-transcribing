@@ -43,7 +43,8 @@ export const loadAudioFromIndexedDB = (
     sliderRef,
     userId,
     setIsTranscribing,
-    handleStopTranscription
+    handleStopTranscription,
+    setAudioFile
 ) => {
     // Open the database
     const request = indexedDB.open(`myDatabase-${userId}`); // include the user ID in the database name
@@ -133,6 +134,8 @@ export const loadAudioFromIndexedDB = (
             // Set the WaveSurfer instance to state
             setWaveSurfer(waveSurfer);
 
+            setAudioFile(audioFile);
+
             // Set initial playing state to false
             setPlaying(false);
             console.log("load called");
@@ -188,7 +191,8 @@ export const recordStop = (
     sliderRef,
     setRegions,
     setIsTranscribing,
-    handleStopTranscription
+    handleStopTranscription,
+    setAudioFile
 ) => {
     setIsRecording(false);
 
@@ -198,6 +202,8 @@ export const recordStop = (
         const audioBlob = new Blob(audioChunks, { type: mimeType });
 
         saveAudioToIndexedDB(audioBlob);
+
+        setAudioFile(audioBlob);
         const reader = new FileReader();
         reader.onload = (event) => {
             const arrayBuffer = event.target.result;
@@ -308,7 +314,8 @@ export const handleFileChange = (
     sliderRef,
     setRegions,
     setIsTranscribing,
-    handleStopTranscription
+    handleStopTranscription,
+    setAudioFile
 ) => {
     const file = event.target.files[0];
 
@@ -332,6 +339,7 @@ export const handleFileChange = (
         setAudioChunks([audioBlob]);
         console.log("audioBlob import: ", audioBlob);
         saveAudioToIndexedDB(audioBlob);
+        setAudioFile(audioBlob);
         const arrayBuffer = event.target.result;
         const audioContext = new AudioContext();
         audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
@@ -417,6 +425,78 @@ export const handleFileChange = (
     reader.readAsArrayBuffer(file);
 };
 
+export const transcribeAudio = async (
+    audioFile,
+    setTranscription,
+    setTimestamps,
+    waveSurfer
+) => {
+    // Create a FormData object with the audio file
+    const formData = new FormData();
+
+    console.log("transcribe audioFile: ", audioFile);
+    formData.append("audio", audioFile);
+
+    // Send a POST request to the /transcribe endpoint on the backend
+    const response = await fetch("http://localhost:5000/api/speech-to-text", {
+        method: "POST",
+        body: formData,
+    });
+
+    // Get the result as JSON
+    const result = await response.json();
+    console.log("result: ", result);
+
+    // Set the transcription and timestamps in the state
+    setTranscription(result.transcription);
+    setTimestamps(result.timestamps);
+
+    const transcriptDiv = document.getElementById("transcript");
+    const words = result.transcription.split(" "); // split the transcription into words
+
+    words.forEach((word, index) => {
+        const wordSpan = document.createElement("span");
+        wordSpan.textContent = word + " "; // add space after each word to separate them
+
+        // set up event listener to trigger corresponding region
+        wordSpan.addEventListener("click", () => {
+            const start = result.timestamps[index].start;
+            const end = result.timestamps[index].end;
+            // trigger region with start and end timestamps
+            console.log("start: ", start);
+            console.log("end: ", end);
+
+            const region = waveSurfer.addRegion({
+                start: start,
+                end: end,
+                color: "rgba(255, 0, 0, 0.3)",
+                index: index,
+            });
+
+            waveSurfer.on("region-updated", (region) => {
+                const newEnd = region.end;
+                setTimestamps((timestamps) => {
+                    const newTimestamps = [...timestamps];
+                    newTimestamps[index].end = newEnd;
+                    return newTimestamps;
+                });
+
+                const newStart = region.start;
+                setTimestamps((timestamps) => {
+                    const newTimestamps = [...timestamps];
+                    newTimestamps[index].start = newStart;
+                    return newTimestamps;
+                });
+            });
+
+            // style the clicked word with a background color
+            wordSpan.style.backgroundColor = region.color;
+        });
+
+        transcriptDiv.appendChild(wordSpan); // add word element to transcript container
+    });
+};
+
 export const removeWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
     if (waveSurfer) {
         waveSurfer.destroy();
@@ -434,7 +514,8 @@ export const undo = (
     regions,
     waveSurfer,
     setRegions,
-    redoActions
+    redoActions,
+    setAudioFile
 ) => {
     if (undoActions.length > 0) {
         const lastAction = undoActions.pop();
@@ -548,6 +629,8 @@ export const undo = (
 
                 saveAudioToIndexedDB(audioBlob);
 
+                setAudioFile(audioBlob);
+
                 // Add cut region back to WaveSurfer and update regions list
                 waveSurfer.addRegion(lastAction.region);
                 const newRegions = regions
@@ -582,6 +665,8 @@ export const undo = (
                 const replaceAudioBlob = bufferToWave(replaceOriginalBuffer);
 
                 saveAudioToIndexedDB(replaceAudioBlob);
+
+                setAudioFile(replaceAudioBlob);
 
                 // Add cut region back to WaveSurfer and update regions list
                 waveSurfer.addRegion(lastAction.region);
@@ -663,7 +748,8 @@ export const handleCutRegion = async (
     waveSurfer,
     regions,
     setUndoActions,
-    undoActions
+    undoActions,
+    setAudioFile
 ) => {
     const cutFrom = region.start;
     const cutTo = region.end;
@@ -720,6 +806,8 @@ export const handleCutRegion = async (
 
     saveAudioToIndexedDB(audioBlob);
 
+    setAudioFile(audioBlob);
+
     // Add cut action to undoActions array
     const action = {
         type: "CUT_REGION",
@@ -738,7 +826,8 @@ export const handleReplaceImportFunction = (
     setIsReplacing,
     setRedoActions,
     setUndoActions,
-    undoActions
+    undoActions,
+    setAudioFile
 ) => {
     // Save original buffer state to a variable
     const originalBufferState = waveSurfer.backend.buffer;
@@ -823,6 +912,8 @@ export const handleReplaceImportFunction = (
 
                     saveAudioToIndexedDB(audioBlob);
 
+                    setAudioFile(audioBlob);
+
                     // Remove the replaced region from the list and the waveform
                     const index = regions.findIndex(
                         (reg) => reg.id === region.id
@@ -889,7 +980,8 @@ export const handleReplaceRecordFunction = (
     setRedoActions,
     setNewMediaRecorder,
     setUndoActions,
-    undoActions
+    undoActions,
+    setAudioFile
 ) => {
     const replaceFrom = region.start;
     const replaceTo = region.end;
@@ -968,6 +1060,8 @@ export const handleReplaceRecordFunction = (
             const audioBlob = bufferToWave(newBuffer);
 
             saveAudioToIndexedDB(audioBlob);
+
+            setAudioFile(audioBlob);
 
             // Remove the replaced region from the list and the waveform
             const index = regions.findIndex((reg) => reg.id === region.id);

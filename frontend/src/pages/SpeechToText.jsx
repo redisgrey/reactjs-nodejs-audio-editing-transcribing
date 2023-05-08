@@ -35,6 +35,7 @@ import {
     removeWaveform,
     bufferToWave,
     loadAudioFromIndexedDB,
+    transcribeAudio,
 } from "../js/audioFunctions";
 
 import NotFound from "./NotFound";
@@ -88,6 +89,12 @@ function SpeechToText() {
     //* STATES FOR THE TRANSCRIPTION FUNCTION
     const [isTranscribing, setIsTranscribing] = useState(false);
 
+    const [audioFile, setAudioFile] = useState(null);
+
+    const [transcription, setTranscription] = useState(null);
+
+    const [timestamps, setTimestamps] = useState(null);
+
     //* STATES FOR THE BUTTON DISABLING WHEN NOT IN USE
     const [recording, setRecording] = useState(false);
 
@@ -118,7 +125,8 @@ function SpeechToText() {
                             sliderRef,
                             userId,
                             setIsTranscribing,
-                            handleStopTranscription
+                            handleStopTranscription,
+                            setAudioFile
                         );
                         setRecording(true);
                         setAudioImported(true);
@@ -137,6 +145,7 @@ function SpeechToText() {
             // Move on with other functionalities in your website
         };
     }, []);
+
     //* RECORDING START BUTTON
     const startRecording = () => {
         navigator.mediaDevices
@@ -167,7 +176,8 @@ function SpeechToText() {
             sliderRef,
             setRegions,
             setIsTranscribing,
-            handleStopTranscription
+            handleStopTranscription,
+            setAudioFile
         );
         setRecording(true);
     };
@@ -186,7 +196,8 @@ function SpeechToText() {
             sliderRef,
             setRegions,
             setIsTranscribing,
-            handleStopTranscription
+            handleStopTranscription,
+            setAudioFile
         );
         setAudioImported(true);
     };
@@ -279,7 +290,14 @@ function SpeechToText() {
     };
 
     const undoAction = () => {
-        undo(undoActions, regions, waveSurfer, setRegions, redoActions);
+        undo(
+            undoActions,
+            regions,
+            waveSurfer,
+            setRegions,
+            redoActions,
+            setAudioFile
+        );
         if (useCut || useReplace) {
             setUseCut(false);
             setUseReplace(false);
@@ -307,7 +325,8 @@ function SpeechToText() {
             waveSurfer,
             regions,
             setUndoActions,
-            undoActions
+            undoActions,
+            setAudioFile
         );
         setUseCut(true);
     };
@@ -325,7 +344,8 @@ function SpeechToText() {
             setIsReplacing,
             setRedoActions,
             setUndoActions,
-            undoActions
+            undoActions,
+            setAudioFile
         );
         setUseReplace(true);
     };
@@ -344,7 +364,8 @@ function SpeechToText() {
                     setRedoActions,
                     setNewMediaRecorder,
                     setUndoActions,
-                    undoActions
+                    undoActions,
+                    setAudioFile
                 );
                 setUseReplace(true);
             })
@@ -521,7 +542,15 @@ function SpeechToText() {
                                                         ? true
                                                         : false
                                                 }
-                                                onClick={handleTranscription}
+                                                onClick={() =>
+                                                    transcribeAudio(
+                                                        audioFile,
+                                                        setTranscription,
+                                                        setTimestamps,
+                                                        waveSurfer,
+                                                        timestamps
+                                                    )
+                                                }
                                             >
                                                 {isTranscribing ? (
                                                     "Transcribing Audio..."
@@ -556,14 +585,17 @@ function SpeechToText() {
                                                 <span>Clear Transcript</span>
                                             </button>
                                         </div>
-                                        <div className="form-group mt-5">
-                                            <textarea
+                                        <div
+                                            id="transcript"
+                                            className="form-group mt-5"
+                                        >
+                                            {/* <textarea
                                                 id="textarea"
                                                 rows="6"
                                                 className="form-control"
-                                                value={transcript}
+                                                value={transcription}
                                                 readOnly
-                                            ></textarea>
+                                            ></textarea> */}
                                         </div>
                                         <div className="flex space-x-3 mt-3">
                                             <button
@@ -765,3 +797,77 @@ function SpeechToText() {
 }
 
 export default SpeechToText;
+
+// import React, { useState, useEffect } from "react";
+
+// function SpeechToText() {
+//     const [file, setFile] = useState(null);
+//     const [transcription, setTranscription] = useState(null);
+//     const [timestamps, setTimestamps] = useState(null);
+
+//     useEffect(() => {
+//         console.log("file: ", file);
+//     }, [file]);
+
+//     const handleSubmit = async (e) => {
+//         e.preventDefault();
+
+//         // Create a FormData object with the audio file
+//         const formData = new FormData();
+//         formData.append("audio", file);
+
+//         // Send a POST request to the /transcribe endpoint on the backend
+//         const response = await fetch(
+//             "http://localhost:5000/api/speech-to-text",
+//             {
+//                 method: "POST",
+//                 body: formData,
+//             }
+//         );
+
+//         // Get the result as JSON
+//         const result = await response.json();
+//         console.log("result: ", result);
+
+//         // Set the transcription and timestamps in the state
+//         setTranscription(result.transcription);
+//         setTimestamps(result.timestamps);
+//     };
+
+//     return (
+//         <div className="mt-56">
+//             <form onSubmit={handleSubmit}>
+//                 <input
+//                     type="file"
+//                     accept="audio/*"
+//                     onChange={(e) => setFile(e.target.files[0])}
+//                 />
+//                 <button type="submit" disabled={!file}>
+//                     Transcribe
+//                 </button>
+//             </form>
+//             {transcription && (
+//                 <div>
+//                     <h2>Transcription:</h2>
+//                     <p>{transcription}</p>
+//                 </div>
+//             )}
+//             {timestamps && (
+//                 <div>
+//                     <h2>Timestamps:</h2>
+//                     <ul>
+//                         {timestamps.map((timestamp, index) => (
+//                             <li key={index}>
+//                                 <p>{timestamp.word}</p>
+//                                 <p>Start time: {timestamp.start}</p>
+//                                 <p>End time: {timestamp.end}</p>
+//                             </li>
+//                         ))}
+//                     </ul>
+//                 </div>
+//             )}
+//         </div>
+//     );
+// }
+
+// export default SpeechToText;
