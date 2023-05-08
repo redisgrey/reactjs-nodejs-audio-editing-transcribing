@@ -536,6 +536,14 @@ export const undo = (
                     color: lastAction.color,
                 });
 
+                // Restore background color of corresponding word
+                const word = document.querySelector(
+                    `[data-region-id="${lastAction.region.id}"]`
+                );
+                if (word) {
+                    word.style.backgroundColor = lastAction.wordBgColor;
+                }
+
                 // Update keys for regions list
                 setRegions(
                     regions.map((region) => ({ ...region, key: region.id }))
@@ -711,13 +719,13 @@ export const redo = (redoActions, regions, waveSurfer, undoActions) => {
                 waveSurfer.regions.list[lastAction.region.id].remove();
                 break;
 
-                // case "REPLACE_REGION":
-                // Replace region with old region
-                const oldRegion = lastAction.oldRegion;
-                const newRegion = lastAction.newRegion;
-                regions.splice(regions.indexOf(newRegion), 1, oldRegion);
-                waveSurfer.regions.list[newRegion.id].update(oldRegion);
-                break;
+            // case "REPLACE_REGION":
+            // Replace region with old region
+            // const oldRegion = lastAction.oldRegion;
+            // const newRegion = lastAction.newRegion;
+            // regions.splice(regions.indexOf(newRegion), 1, oldRegion);
+            // waveSurfer.regions.list[newRegion.id].update(oldRegion);
+            // break;
             default:
                 break;
         }
@@ -741,15 +749,26 @@ export const handleDeleteRegion = async (
         waveSurfer.pause();
         setCurrentRegion(null);
     }
+
+    // Store previous background color of corresponding word
+    const word = document.querySelector(`[data-region-id="${region.id}"]`);
+    const wordBgColor = word
+        ? window.getComputedStyle(word).backgroundColor
+        : "";
+
     await waveSurfer.regions.list[region.id].remove();
 
     // reset background color of corresponding word
-    const word = document.querySelector(`[data-region-id="${region.id}"]`);
     if (word) {
         word.style.backgroundColor = "";
     }
     // Add delete action to undoActions array
-    const action = { type: "DELETE_REGION", region, color: originalColor };
+    const action = {
+        type: "DELETE_REGION",
+        region,
+        color: originalColor,
+        wordBgColor,
+    };
     setUndoActions([...undoActions, action]);
 };
 
