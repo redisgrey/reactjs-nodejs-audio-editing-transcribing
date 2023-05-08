@@ -493,6 +493,34 @@ export const transcribeAudio = async (
             // style the clicked word with a background color
             wordSpan.style.backgroundColor = region.color;
 
+            // add edit button to word span
+            const editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.classList.add("edit-button");
+            editButton.addEventListener("click", (event) => {
+                event.stopPropagation(); // prevent click event from triggering word click event
+                const currentWord = wordSpan.textContent.trim();
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = currentWord;
+                input.addEventListener("blur", () => {
+                    const editedWord = input.value.trim();
+                    if (editedWord !== currentWord) {
+                        const newTranscription = result.transcription.replace(
+                            currentWord,
+                            editedWord
+                        );
+                        setTranscription(newTranscription);
+                        wordSpan.textContent = editedWord + " ";
+                        wordSpan.appendChild(editButton);
+                        wordSpan.appendChild(deleteButton);
+                    }
+                    transcriptDiv.replaceChild(wordSpan, input);
+                });
+                transcriptDiv.replaceChild(input, wordSpan);
+            });
+            wordSpan.appendChild(editButton);
+
             // add delete button to word span
             const deleteButton = document.createElement("button");
             deleteButton.textContent = "X";
@@ -567,6 +595,7 @@ export const undo = (
                 );
                 if (word) {
                     word.style.backgroundColor = lastAction.wordBgColor;
+                    word.appendChild(lastAction.editButton);
                     word.appendChild(lastAction.deleteButton);
                 }
 
@@ -753,14 +782,6 @@ export const redo = (redoActions, regions, waveSurfer, undoActions) => {
                 }
 
                 break;
-
-            // case "REPLACE_REGION":
-            // Replace region with old region
-            // const oldRegion = lastAction.oldRegion;
-            // const newRegion = lastAction.newRegion;
-            // regions.splice(regions.indexOf(newRegion), 1, oldRegion);
-            // waveSurfer.regions.list[newRegion.id].update(oldRegion);
-            // break;
             default:
                 break;
         }
@@ -794,10 +815,12 @@ export const handleDeleteRegion = async (
     await waveSurfer.regions.list[region.id].remove();
 
     const deleteButton = document.querySelector(".delete-button");
+    const editButton = document.querySelector(".edit-button");
     // reset background color of corresponding word
     if (word) {
         word.style.backgroundColor = "";
         word.removeChild(deleteButton);
+        word.removeChild(editButton);
     }
     // Add delete action to undoActions array
     const action = {
@@ -806,6 +829,7 @@ export const handleDeleteRegion = async (
         color: originalColor,
         wordBgColor,
         deleteButton,
+        editButton,
     };
     setUndoActions([...undoActions, action]);
 };
