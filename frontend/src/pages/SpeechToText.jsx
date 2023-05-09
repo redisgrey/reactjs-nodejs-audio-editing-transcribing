@@ -2,10 +2,6 @@ import { useState, useRef, useEffect } from "react";
 
 import { useSelector } from "react-redux";
 
-import SpeechRecognition, {
-    useSpeechRecognition,
-} from "react-speech-recognition";
-
 import { BsFillPlayFill, BsFillStopFill, BsDownload } from "react-icons/bs";
 
 import { CgTranscript } from "react-icons/cg";
@@ -556,15 +552,7 @@ function SpeechToText() {
                                                     </>
                                                 )}
                                             </button>
-                                            {/* <button
-                                                className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
-                                                onClick={
-                                                    handleStopTranscription
-                                                }
-                                            >
-                                                <AiOutlineStop />{" "}
-                                                <span>Cancel Transcribing</span>
-                                            </button> */}
+
                                             <button
                                                 className="btn  bg-red-500 focus:bg-red-500 text-white hover:bg-red-300 w-50 me-4 space-x-2 flex justify-center items-center"
                                                 onClick={resetTranscript}
@@ -784,77 +772,3 @@ function SpeechToText() {
 }
 
 export default SpeechToText;
-
-// import React, { useState, useEffect } from "react";
-
-// function SpeechToText() {
-//     const [file, setFile] = useState(null);
-//     const [transcription, setTranscription] = useState(null);
-//     const [timestamps, setTimestamps] = useState(null);
-
-//     useEffect(() => {
-//         console.log("file: ", file);
-//     }, [file]);
-
-//     const handleSubmit = async (e) => {
-//         e.preventDefault();
-
-//         // Create a FormData object with the audio file
-//         const formData = new FormData();
-//         formData.append("audio", file);
-
-//         // Send a POST request to the /transcribe endpoint on the backend
-//         const response = await fetch(
-//             "http://localhost:5000/api/speech-to-text",
-//             {
-//                 method: "POST",
-//                 body: formData,
-//             }
-//         );
-
-//         // Get the result as JSON
-//         const result = await response.json();
-//         console.log("result: ", result);
-
-//         // Set the transcription and timestamps in the state
-//         setTranscription(result.transcription);
-//         setTimestamps(result.timestamps);
-//     };
-
-//     return (
-//         <div className="mt-56">
-//             <form onSubmit={handleSubmit}>
-//                 <input
-//                     type="file"
-//                     accept="audio/*"
-//                     onChange={(e) => setFile(e.target.files[0])}
-//                 />
-//                 <button type="submit" disabled={!file}>
-//                     Transcribe
-//                 </button>
-//             </form>
-//             {transcription && (
-//                 <div>
-//                     <h2>Transcription:</h2>
-//                     <p>{transcription}</p>
-//                 </div>
-//             )}
-//             {timestamps && (
-//                 <div>
-//                     <h2>Timestamps:</h2>
-//                     <ul>
-//                         {timestamps.map((timestamp, index) => (
-//                             <li key={index}>
-//                                 <p>{timestamp.word}</p>
-//                                 <p>Start time: {timestamp.start}</p>
-//                                 <p>End time: {timestamp.end}</p>
-//                             </li>
-//                         ))}
-//                     </ul>
-//                 </div>
-//             )}
-//         </div>
-//     );
-// }
-
-// export default SpeechToText;
