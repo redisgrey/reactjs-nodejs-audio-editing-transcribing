@@ -75,7 +75,7 @@ export const loadAudioFromIndexedDB = (
                         container: "#timeline",
                     }),
                     RegionsPlugin.create({
-                        regionsMinLength: 0.5,
+                        regionsMinLength: 1.1,
                         dragSelection: {
                             slop: 5,
                         },
@@ -217,7 +217,7 @@ export const recordStop = (
                             container: "#timeline",
                         }),
                         RegionsPlugin.create({
-                            regionsMinLength: 0.5,
+                            regionsMinLength: 1.1,
                             dragSelection: {
                                 slop: 5,
                             },
@@ -347,7 +347,7 @@ export const handleFileChange = (
                         container: "#timeline",
                     }),
                     RegionsPlugin.create({
-                        regionsMinLength: 0.5,
+                        regionsMinLength: 1.1,
                         dragSelection: {
                             slop: 5,
                         },
@@ -485,6 +485,7 @@ export const transcribeAudio = async (
                     newTimestamps[index].end = newEnd;
                     return newTimestamps;
                 });
+                console.log("newEnd: ", newEnd);
 
                 const newStart = region.start;
                 setTimestamps((timestamps) => {
@@ -492,6 +493,7 @@ export const transcribeAudio = async (
                     newTimestamps[index].start = newStart;
                     return newTimestamps;
                 });
+                console.log("newStart: ", newStart);
             });
 
             // style the clicked word with a background color
@@ -503,7 +505,7 @@ export const transcribeAudio = async (
             editButton.classList.add("edit-button");
             editButton.addEventListener("click", (event) => {
                 event.stopPropagation(); // prevent click event from triggering word click event
-                const currentWord = wordSpan.textContent.trim();
+                const currentWord = wordSpan.textContent.trim()[0];
                 const input = document.createElement("input");
                 input.type = "text";
                 input.value = currentWord;
@@ -517,6 +519,7 @@ export const transcribeAudio = async (
                         setTranscription(newTranscription);
                         wordSpan.textContent = editedWord + " ";
                         wordSpan.appendChild(editButton);
+                        wordSpan.appendChild(replaceButton);
                         wordSpan.appendChild(deleteButton);
                     }
                     transcriptDiv.replaceChild(wordSpan, input);
@@ -536,7 +539,7 @@ export const transcribeAudio = async (
                     navigator.mediaDevices
                         .getUserMedia({ audio: true })
                         .then((stream) => {
-                            handleReplaceRecordFunction(
+                            handleReplaceRecordFunctionUsingTrancript(
                                 region,
                                 stream,
                                 waveSurfer,
@@ -554,18 +557,6 @@ export const transcribeAudio = async (
                             console.error("error ", error);
                         });
                 }
-            });
-            wordSpan.appendChild(replaceButton);
-
-            //add replace stop button to word span
-            const replaceStopButton = document.createElement("button");
-            replaceStopButton.textContent = "Stop Recording";
-            replaceStopButton.classList.add("replace-stop-button");
-            replaceStopButton.addEventListener("click", (event) => {
-                event.stopPropagation(); // prevent click event from triggering word click event
-
-                handleReplaceRecordStop();
-
                 // remove the word span from the transcription
                 wordSpan.remove();
                 // update the timestamps in the state
@@ -575,8 +566,7 @@ export const transcribeAudio = async (
                     return newTimestamps;
                 });
             });
-
-            wordSpan.appendChild(replaceStopButton);
+            wordSpan.appendChild(replaceButton);
 
             // add delete button to word span
             const deleteButton = document.createElement("button");
@@ -653,6 +643,7 @@ export const undo = (
                 if (word) {
                     word.style.backgroundColor = lastAction.wordBgColor;
                     word.appendChild(lastAction.editButton);
+                    word.appendChild(lastAction.replaceButton);
                     word.appendChild(lastAction.deleteButton);
                 }
 
@@ -873,11 +864,13 @@ export const handleDeleteRegion = async (
 
     const deleteButton = document.querySelector(".delete-button");
     const editButton = document.querySelector(".edit-button");
+    const replaceButton = document.querySelector(".replace-button");
     // reset background color of corresponding word
     if (word) {
         word.style.backgroundColor = "";
         word.removeChild(deleteButton);
         word.removeChild(editButton);
+        word.removeChild(replaceButton);
     }
     // Add delete action to undoActions array
     const action = {
@@ -887,6 +880,7 @@ export const handleDeleteRegion = async (
         wordBgColor,
         deleteButton,
         editButton,
+        replaceButton,
     };
     setUndoActions([...undoActions, action]);
 };
@@ -1135,10 +1129,10 @@ export const handleReplaceRecordFunction = (
     const replaceTo = region.end;
 
     // Check if the selected region is at least 5 seconds long
-    // if (replaceTo - replaceFrom < 5) {
-    //     alert("Selected region must be at least 5 seconds long.");
-    //     return;
-    // }
+    if (replaceTo - replaceFrom < 5) {
+        alert("Selected region must be at least 5 seconds long.");
+        return;
+    }
 
     const originalBuffer = waveSurfer.backend.buffer;
     const rate = originalBuffer.sampleRate;
@@ -1170,12 +1164,12 @@ export const handleReplaceRecordFunction = (
             );
 
             // Check if the length of the recorded buffer is longer than the selected region
-            // const recordedDuration = recordedBuffer.duration;
-            // const selectedDuration = replaceTo - replaceFrom;
-            // if (recordedDuration > selectedDuration) {
-            //     alert("Recording is longer than selected region");
-            //     return;
-            // }
+            const recordedDuration = recordedBuffer.duration;
+            const selectedDuration = replaceTo - replaceFrom;
+            if (recordedDuration > selectedDuration) {
+                alert("Recording is longer than selected region");
+                return;
+            }
 
             // Replace the selected region with the recorded audio
             const newBuffer = waveSurfer.backend.ac.createBuffer(
@@ -1250,6 +1244,146 @@ export const handleReplaceRecordFunction = (
         console.log(mediaRecorder);
         // Set the newMediaRecorder object to state so it can be stopped later
         setNewMediaRecorder(mediaRecorder);
+    }
+
+    console.log("replace record start");
+
+    // Add replace action to undoActions array
+    const action = {
+        type: "REPLACE_REGION",
+        region,
+
+        color: region.color,
+        originalBuffer: originalBuffer,
+    };
+    setUndoActions([...undoActions, action]);
+};
+
+// For Replace Record Function using Transcript
+export const handleReplaceRecordFunctionUsingTrancript = (
+    region,
+    stream,
+    waveSurfer,
+    setIsReplaceRecording,
+    regions,
+    setIsReplacing,
+    setRedoActions,
+    setNewMediaRecorder,
+    setUndoActions,
+    undoActions,
+    setAudioFile
+) => {
+    const replaceFrom = region.start;
+    const replaceTo = region.end;
+
+    const originalBuffer = waveSurfer.backend.buffer;
+    const rate = originalBuffer.sampleRate;
+    const originalDuration = originalBuffer.duration;
+    const startOffset = parseInt(replaceFrom * rate);
+    const endOffset = parseInt(replaceTo * rate);
+
+    const leftBuffer = originalBuffer.getChannelData(0).slice(0, startOffset);
+    const rightBuffer =
+        originalBuffer.numberOfChannels > 1
+            ? originalBuffer.getChannelData(1).slice(0, startOffset)
+            : new Float32Array(leftBuffer.length).fill(0);
+
+    const mediaRecorder = new MediaRecorder(stream);
+    const chunks = [];
+    if (mediaRecorder) {
+        mediaRecorder.addEventListener("dataavailable", (event) => {
+            chunks.push(event.data);
+        });
+        mediaRecorder.addEventListener("stop", async () => {
+            setIsReplaceRecording(false);
+            // Convert recorded audio to buffer
+            const blob = new Blob(chunks, {
+                type: "audio/ogg; codecs=opus",
+            });
+            const arrayBuffer = await blob.arrayBuffer();
+            const recordedBuffer = await waveSurfer.backend.ac.decodeAudioData(
+                arrayBuffer
+            );
+
+            // Replace the selected region with the recorded audio
+            const newBuffer = waveSurfer.backend.ac.createBuffer(
+                originalBuffer.numberOfChannels,
+                originalBuffer.length,
+                originalBuffer.sampleRate
+            );
+            const numChannels = originalBuffer.numberOfChannels;
+            for (let i = 0; i < numChannels; i++) {
+                const channelData = originalBuffer.getChannelData(i);
+                const newChannelData = newBuffer.getChannelData(i);
+                if (i < recordedBuffer.numberOfChannels) {
+                    newChannelData.set(channelData.subarray(0, startOffset));
+                    newChannelData.set(
+                        recordedBuffer.getChannelData(i),
+                        startOffset
+                    );
+                    newChannelData.set(
+                        channelData.subarray(endOffset),
+                        startOffset + recordedBuffer.length
+                    );
+                } else {
+                    newChannelData.set(channelData);
+                }
+            }
+
+            waveSurfer.backend.buffer = newBuffer;
+
+            const audioBlob = bufferToWave(newBuffer);
+
+            saveAudioToIndexedDB(audioBlob);
+
+            setAudioFile(audioBlob);
+
+            // Remove the replaced region from the list and the waveform
+            const index = regions.findIndex((reg) => reg.id === region.id);
+            regions.splice(index, 1);
+            waveSurfer.regions.list[region.id].remove();
+
+            waveSurfer.drawBuffer();
+            waveSurfer.clearRegions();
+
+            // Add new regions based on updated audio
+            let offset = 0;
+            regions.forEach((reg) => {
+                const newStart =
+                    reg.start > replaceTo
+                        ? reg.start - (replaceTo - replaceFrom)
+                        : reg.start;
+                const newEnd =
+                    reg.end > replaceTo
+                        ? reg.end - (replaceTo - replaceFrom)
+                        : reg.end;
+                waveSurfer.addRegion({
+                    id: reg.id,
+                    start: newStart,
+                    end: newEnd,
+                    color: reg.color,
+                    label: reg.label,
+                    drag: true,
+                });
+            });
+
+            setIsReplacing(false);
+
+            // Clear redoActions array
+            setRedoActions([]);
+        });
+        mediaRecorder.start();
+        setIsReplaceRecording(true);
+
+        console.log(mediaRecorder);
+
+        // Pass the newMediaRecorder state variable to handleReplaceRecordStop function
+        const stopRecording = () => handleReplaceRecordStop(mediaRecorder);
+
+        setTimeout(() => {
+            stopRecording();
+            setIsReplaceRecording(false);
+        }, 1000);
     }
 
     console.log("replace record start");
