@@ -36,6 +36,7 @@ import {
     bufferToWave,
     loadAudioFromIndexedDB,
     transcribeAudio,
+    handleReplaceRecordStop,
 } from "../js/audioFunctions";
 
 import NotFound from "./NotFound";
@@ -361,10 +362,6 @@ function SpeechToText() {
             });
     };
 
-    const handleReplaceRecordStop = () => {
-        newMediaRecorder.stop();
-    };
-
     const handleDownload = (waveSurfer) => {
         console.log("wavesurfer download: ", waveSurfer);
         if (waveSurfer) {
@@ -539,7 +536,12 @@ function SpeechToText() {
                                                         setUndoActions,
                                                         undoActions,
                                                         setAudioFile,
-                                                        setIsTranscribing
+                                                        setIsTranscribing,
+                                                        setIsReplaceRecording,
+                                                        setIsReplacing,
+                                                        setRedoActions,
+                                                        setNewMediaRecorder,
+                                                        mediaRecorder
                                                     )
                                                 }
                                             >
@@ -719,7 +721,9 @@ function SpeechToText() {
                                                                                 <button
                                                                                     className="btn bg-red-500 focus:bg-red-500 hover:bg-red-300"
                                                                                     onClick={() =>
-                                                                                        handleReplaceRecordStop()
+                                                                                        handleReplaceRecordStop(
+                                                                                            newMediaRecorder
+                                                                                        )
                                                                                     }
                                                                                 >
                                                                                     Stop

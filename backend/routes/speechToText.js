@@ -12,7 +12,6 @@ router.post("/", upload.single("audio"), async (req, res, next) => {
     try {
         // Get the audio file data from the request body
         const audioBuffer = req.file.buffer;
-        console.log("audioBuffer: ", audioBuffer);
 
         // Detects speech in the audio file
         const [response] = await client.recognize({
