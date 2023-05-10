@@ -75,7 +75,7 @@ export const loadAudioFromIndexedDB = (
                         container: "#timeline",
                     }),
                     RegionsPlugin.create({
-                        regionsMinLength: 1.1,
+                        regionsMinLength: 1,
                         dragSelection: {
                             slop: 5,
                         },
@@ -217,7 +217,7 @@ export const recordStop = (
                             container: "#timeline",
                         }),
                         RegionsPlugin.create({
-                            regionsMinLength: 1.1,
+                            regionsMinLength: 1,
                             dragSelection: {
                                 slop: 5,
                             },
@@ -347,7 +347,7 @@ export const handleFileChange = (
                         container: "#timeline",
                     }),
                     RegionsPlugin.create({
-                        regionsMinLength: 1.1,
+                        regionsMinLength: 1,
                         dragSelection: {
                             slop: 5,
                         },
@@ -464,9 +464,12 @@ export const transcribeAudio = async (
         wordSpan.setAttribute("data-region-id", regionId);
 
         // set up event listener to trigger corresponding region
-        wordSpan.addEventListener("click", () => {
-            const start = result.timestamps[index].start;
-            const end = result.timestamps[index].end;
+        wordSpan.addEventListener("click", function handleClick() {
+            let start = result.timestamps[index].start;
+            let end = result.timestamps[index].end;
+            if (end - start !== 1) {
+                end = start + 1;
+            }
             // trigger region with start and end timestamps
             console.log("start: ", start);
             console.log("end: ", end);
@@ -595,6 +598,8 @@ export const transcribeAudio = async (
                 });
             });
             wordSpan.appendChild(deleteButton);
+            // remove event listener to prevent further clicks
+            wordSpan.removeEventListener("click", handleClick);
         });
 
         transcriptDiv.appendChild(wordSpan); // add word element to transcript container
