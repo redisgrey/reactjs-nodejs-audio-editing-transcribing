@@ -514,7 +514,7 @@ export const transcribeAudio = async (
             editButton.classList.add("edit-button");
             editButton.addEventListener("click", (event) => {
                 event.stopPropagation(); // prevent click event from triggering word click event
-                const currentWord = wordSpan.textContent.trim()[0];
+                const currentWord = wordSpan.textContent.split(" ", 1);
                 const input = document.createElement("input");
                 input.type = "text";
                 input.value = currentWord;
@@ -595,18 +595,18 @@ export const transcribeAudio = async (
                         setAudioFile
                     );
                 }
-                // remove the word span from the transcription
-                wordSpan.remove();
-                // update the timestamps in the state
-                setTimestamps((timestamps) => {
-                    const newTimestamps = [...timestamps];
-                    newTimestamps.splice(index, 1);
-                    return newTimestamps;
-                });
+                // // remove the word span from the transcription
+                // wordSpan.remove();
+                // // update the timestamps in the state
+                // setTimestamps((timestamps) => {
+                //     const newTimestamps = [...timestamps];
+                //     newTimestamps.splice(index, 1);
+                //     return newTimestamps;
+                // });
             });
             wordSpan.appendChild(deleteButton);
 
-            // add delete button to word span
+            // add close button to word span
             const closeButton = document.createElement("button");
             closeButton.textContent = "Close";
             closeButton.classList.add("close-button");
@@ -628,7 +628,7 @@ export const transcribeAudio = async (
             wordSpan.appendChild(closeButton);
 
             // remove event listener to prevent further clicks
-            wordSpan.removeEventListener("click", handleClick);
+            //wordSpan.removeEventListener("click", handleClick);
         });
 
         transcriptDiv.appendChild(wordSpan); // add word element to transcript container
@@ -797,6 +797,19 @@ export const undo = (
                 waveSurfer.regions.list[lastAction.region.id].update({
                     color: lastAction.color,
                 });
+
+                // Restore background color of corresponding word
+                const wordCut = document.querySelector(
+                    `[data-region-id="${lastAction.region.id}"]`
+                );
+                if (wordCut) {
+                    wordCut.textContent = lastAction.wordContent + " ";
+                    wordCut.style.backgroundColor = lastAction.wordBgColor;
+                    wordCut.appendChild(lastAction.editButton);
+                    wordCut.appendChild(lastAction.replaceButton);
+                    wordCut.appendChild(lastAction.deleteButton);
+                    wordCut.appendChild(lastAction.closeButton);
+                }
 
                 break;
 
@@ -988,6 +1001,27 @@ export const handleCutRegion = async (
 
     setAudioFile(audioBlob);
 
+    // Store previous background color of corresponding word
+    const word = document.querySelector(`[data-region-id="${region.id}"]`);
+    const wordContent = word ? word.textContent.split(" ", 1) : "";
+    const wordBgColor = word
+        ? window.getComputedStyle(word).backgroundColor
+        : "";
+
+    const deleteButton = document.querySelector(".delete-button");
+    const editButton = document.querySelector(".edit-button");
+    const replaceButton = document.querySelector(".replace-button");
+    const closeButton = document.querySelector(".close-button");
+    // reset background color of corresponding word
+    if (word) {
+        word.textContent = "";
+        // word.style.backgroundColor = "";
+        // word.removeChild(deleteButton);
+        // word.removeChild(editButton);
+        // word.removeChild(replaceButton);
+        // word.removeChild(closeButton);
+    }
+
     // Add cut action to undoActions array
     const action = {
         type: "CUT_REGION",
@@ -995,6 +1029,12 @@ export const handleCutRegion = async (
         index,
         color: region.color,
         originalBuffer: originalBuffer,
+        wordContent,
+        wordBgColor,
+        deleteButton,
+        editButton,
+        replaceButton,
+        closeButton,
     };
     setUndoActions([...undoActions, action]);
 };
