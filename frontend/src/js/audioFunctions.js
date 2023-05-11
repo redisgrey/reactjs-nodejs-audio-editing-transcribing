@@ -459,6 +459,8 @@ export const transcribeAudio = async (
     const transcriptDiv = document.getElementById("transcript");
     const words = result.transcription.split(" "); // split the transcription into words
 
+    let openRegionId = null; // Track the ID of the currently open word
+
     words.forEach((word, index) => {
         const wordSpan = document.createElement("span");
         wordSpan.textContent = word + " "; // add space after each word to separate them
@@ -471,6 +473,7 @@ export const transcribeAudio = async (
 
         wordSpan.addEventListener("click", function handleClick() {
             setTranscriptWordOpen(true);
+
             let start = result.timestamps[index].start;
             let end = result.timestamps[index].end;
             if (end - start !== 1) {
@@ -479,6 +482,23 @@ export const transcribeAudio = async (
             // trigger region with start and end timestamps
             console.log("start: ", start);
             console.log("end: ", end);
+
+            if (openRegionId !== null) {
+                // Close the previously open word
+                const previousRegion = waveSurfer.regions.list[openRegionId];
+                if (previousRegion) {
+                    handleDeleteRegion(
+                        previousRegion,
+                        currentRegion,
+                        waveSurfer,
+                        setCurrentRegion,
+                        setUndoActions,
+                        undoActions
+                    );
+                }
+            }
+
+            openRegionId = regionId; // Update the openRegionId with the new word's region ID
 
             const region = waveSurfer.addRegion({
                 start: start,
@@ -606,11 +626,13 @@ export const transcribeAudio = async (
                         setUndoActions,
                         undoActions
                     );
-                    setTranscriptWordOpen(false);
                 }
             });
             wordSpan.appendChild(closeButton);
 
+            if (transcriptWordOpen) {
+                wordSpan.removeEventListener("click", handleClick);
+            }
             // remove event listener to prevent further clicks
             //wordSpan.removeEventListener("click", handleClick);
         });
