@@ -416,6 +416,8 @@ export const transcribeAudio = async (
     setTranscription,
     setTimestamps,
     waveSurfer,
+    currentRegion,
+    setCurrentRegion,
     regions,
     setUndoActions,
     undoActions,
@@ -424,7 +426,9 @@ export const transcribeAudio = async (
     setIsReplaceRecording,
     setIsReplacing,
     setRedoActions,
-    setNewMediaRecorder
+    setNewMediaRecorder,
+    setTranscriptWordOpen,
+    transcriptWordOpen
 ) => {
     const transcriptDivToClear = document.getElementById("transcript");
     transcriptDivToClear.innerHTML = ""; // Remove all the child elements of transcriptDiv
@@ -464,7 +468,9 @@ export const transcribeAudio = async (
         wordSpan.setAttribute("data-region-id", regionId);
 
         // set up event listener to trigger corresponding region
+
         wordSpan.addEventListener("click", function handleClick() {
+            setTranscriptWordOpen(true);
             let start = result.timestamps[index].start;
             let end = result.timestamps[index].end;
             if (end - start !== 1) {
@@ -524,6 +530,7 @@ export const transcribeAudio = async (
                         wordSpan.appendChild(editButton);
                         wordSpan.appendChild(replaceButton);
                         wordSpan.appendChild(deleteButton);
+                        wordSpan.appendChild(closeButton);
                     }
                     transcriptDiv.replaceChild(wordSpan, input);
                 });
@@ -598,8 +605,32 @@ export const transcribeAudio = async (
                 });
             });
             wordSpan.appendChild(deleteButton);
-            // remove event listener to prevent further clicks
-            wordSpan.removeEventListener("click", handleClick);
+
+            // add delete button to word span
+            const closeButton = document.createElement("button");
+            closeButton.textContent = "Close";
+            closeButton.classList.add("close-button");
+            closeButton.addEventListener("click", (event) => {
+                event.stopPropagation(); // prevent click event from triggering word click event
+                const region = waveSurfer.regions.list[regionId];
+                if (region) {
+                    handleDeleteRegion(
+                        region,
+                        currentRegion,
+                        waveSurfer,
+                        setCurrentRegion,
+                        setUndoActions,
+                        undoActions
+                    );
+                    setTranscriptWordOpen(false);
+                }
+            });
+            wordSpan.appendChild(closeButton);
+
+            if (transcriptWordOpen) {
+                // remove event listener to prevent further clicks
+                wordSpan.removeEventListener("click", handleClick);
+            }
         });
 
         transcriptDiv.appendChild(wordSpan); // add word element to transcript container
@@ -650,6 +681,7 @@ export const undo = (
                     word.appendChild(lastAction.editButton);
                     word.appendChild(lastAction.replaceButton);
                     word.appendChild(lastAction.deleteButton);
+                    word.appendChild(lastAction.closeButton);
                 }
 
                 // Update keys for regions list
@@ -870,12 +902,14 @@ export const handleDeleteRegion = async (
     const deleteButton = document.querySelector(".delete-button");
     const editButton = document.querySelector(".edit-button");
     const replaceButton = document.querySelector(".replace-button");
+    const closeButton = document.querySelector(".close-button");
     // reset background color of corresponding word
     if (word) {
         word.style.backgroundColor = "";
         word.removeChild(deleteButton);
         word.removeChild(editButton);
         word.removeChild(replaceButton);
+        word.removeChild(closeButton);
     }
     // Add delete action to undoActions array
     const action = {
@@ -886,6 +920,7 @@ export const handleDeleteRegion = async (
         deleteButton,
         editButton,
         replaceButton,
+        closeButton,
     };
     setUndoActions([...undoActions, action]);
 };

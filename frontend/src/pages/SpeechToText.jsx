@@ -97,6 +97,9 @@ function SpeechToText() {
 
     const [audioImported, setAudioImported] = useState(false);
 
+    // *
+    const [transcriptWordOpen, setTranscriptWordOpen] = useState(false);
+
     useEffect(() => {
         const userId = JSON.parse(localStorage.getItem("user")).id;
         // Check if there is an audio file saved in IndexedDB
@@ -528,6 +531,8 @@ function SpeechToText() {
                                                         setTranscription,
                                                         setTimestamps,
                                                         waveSurfer,
+                                                        currentRegion,
+                                                        setCurrentRegion,
                                                         regions,
                                                         setUndoActions,
                                                         undoActions,
@@ -537,7 +542,8 @@ function SpeechToText() {
                                                         setIsReplacing,
                                                         setRedoActions,
                                                         setNewMediaRecorder,
-                                                        mediaRecorder
+                                                        setTranscriptWordOpen,
+                                                        transcriptWordOpen
                                                     )
                                                 }
                                             >
