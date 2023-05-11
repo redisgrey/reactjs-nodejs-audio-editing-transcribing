@@ -627,10 +627,8 @@ export const transcribeAudio = async (
             });
             wordSpan.appendChild(closeButton);
 
-            if (transcriptWordOpen) {
-                // remove event listener to prevent further clicks
-                wordSpan.removeEventListener("click", handleClick);
-            }
+            // remove event listener to prevent further clicks
+            wordSpan.removeEventListener("click", handleClick);
         });
 
         transcriptDiv.appendChild(wordSpan); // add word element to transcript container
