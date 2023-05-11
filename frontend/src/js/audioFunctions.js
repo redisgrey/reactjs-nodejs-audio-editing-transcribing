@@ -567,14 +567,6 @@ export const transcribeAudio = async (
                             console.error("error ", error);
                         });
                 }
-                // remove the word span from the transcription
-                wordSpan.remove();
-                // update the timestamps in the state
-                setTimestamps((timestamps) => {
-                    const newTimestamps = [...timestamps];
-                    newTimestamps.splice(index, 1);
-                    return newTimestamps;
-                });
             });
             wordSpan.appendChild(replaceButton);
 
@@ -595,14 +587,6 @@ export const transcribeAudio = async (
                         setAudioFile
                     );
                 }
-                // // remove the word span from the transcription
-                // wordSpan.remove();
-                // // update the timestamps in the state
-                // setTimestamps((timestamps) => {
-                //     const newTimestamps = [...timestamps];
-                //     newTimestamps.splice(index, 1);
-                //     return newTimestamps;
-                // });
             });
             wordSpan.appendChild(deleteButton);
 
@@ -848,6 +832,24 @@ export const undo = (
                     color: lastAction.color,
                 });
 
+                // Restore original color of region
+                waveSurfer.regions.list[lastAction.region.id].update({
+                    color: lastAction.color,
+                });
+
+                // Restore background color of corresponding word
+                const wordReplace = document.querySelector(
+                    `[data-region-id="${lastAction.region.id}"]`
+                );
+                if (wordReplace) {
+                    wordReplace.textContent = lastAction.wordContent + " ";
+                    wordReplace.style.backgroundColor = lastAction.wordBgColor;
+                    wordReplace.appendChild(lastAction.editButton);
+                    wordReplace.appendChild(lastAction.replaceButton);
+                    wordReplace.appendChild(lastAction.deleteButton);
+                    wordReplace.appendChild(lastAction.closeButton);
+                }
+
                 break;
 
             default:
@@ -873,8 +875,16 @@ export const redo = (redoActions, regions, waveSurfer, undoActions) => {
                 const word = document.querySelector(
                     `[data-region-id="${lastAction.region.id}"]`
                 );
+                const deleteButton = document.querySelector(".delete-button");
+                const editButton = document.querySelector(".edit-button");
+                const replaceButton = document.querySelector(".replace-button");
+                const closeButton = document.querySelector(".close-button");
                 if (word) {
                     word.style.backgroundColor = "";
+                    word.removeChild(deleteButton);
+                    word.removeChild(editButton);
+                    word.removeChild(replaceButton);
+                    word.removeChild(closeButton);
                 }
 
                 break;
@@ -1015,11 +1025,6 @@ export const handleCutRegion = async (
     // reset background color of corresponding word
     if (word) {
         word.textContent = "";
-        // word.style.backgroundColor = "";
-        // word.removeChild(deleteButton);
-        // word.removeChild(editButton);
-        // word.removeChild(replaceButton);
-        // word.removeChild(closeButton);
     }
 
     // Add cut action to undoActions array
@@ -1466,13 +1471,34 @@ export const handleReplaceRecordFunctionUsingTrancript = (
 
     console.log("replace record start");
 
+    // Store previous background color of corresponding word
+    const word = document.querySelector(`[data-region-id="${region.id}"]`);
+    const wordContent = word ? word.textContent.split(" ", 1) : "";
+    const wordBgColor = word
+        ? window.getComputedStyle(word).backgroundColor
+        : "";
+
+    const deleteButton = document.querySelector(".delete-button");
+    const editButton = document.querySelector(".edit-button");
+    const replaceButton = document.querySelector(".replace-button");
+    const closeButton = document.querySelector(".close-button");
+    // reset background color of corresponding word
+    if (word) {
+        word.textContent = "";
+    }
+
     // Add replace action to undoActions array
     const action = {
         type: "REPLACE_REGION",
         region,
-
         color: region.color,
         originalBuffer: originalBuffer,
+        wordContent,
+        wordBgColor,
+        deleteButton,
+        editButton,
+        replaceButton,
+        closeButton,
     };
     setUndoActions([...undoActions, action]);
 };
