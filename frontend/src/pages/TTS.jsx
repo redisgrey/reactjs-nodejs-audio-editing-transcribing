@@ -14,7 +14,7 @@ function TTS() {
     const [value, setValue] = useState("");
 
     const generateAndDownloadAudio = (text) => {
-        const endpoint = `http://localhost:5000/api/text-to-speech?text=${value}`;
+        const endpoint = `/api/text-to-speech?text=${value}`;
         fetch(endpoint)
             .then((response) => {
                 console.log(response);

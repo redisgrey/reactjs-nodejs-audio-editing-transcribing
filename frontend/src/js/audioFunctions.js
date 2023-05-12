@@ -443,7 +443,7 @@ export const transcribeAudio = async (
     formData.append("audio", audioFile);
 
     // Send a POST request to the /transcribe endpoint on the backend
-    const response = await fetch("http://localhost:5000/api/speech-to-text", {
+    const response = await fetch("/api/speech-to-text", {
         method: "POST",
         body: formData,
     });
