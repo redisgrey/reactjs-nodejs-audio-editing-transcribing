@@ -45,6 +45,7 @@ export const loadAudioFromIndexedDB = (
     setRegions,
     sliderRef,
     userId,
+    setIsTranscribing,
     setAudioFile
 ) => {
     // Open the database
