@@ -4,6 +4,7 @@ import TimelinePlugin from "wavesurfer.js/dist/plugin/wavesurfer.timeline.min.js
 
 import RegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions.min.js";
 
+// *Function for automatically saving the audio after recording/importing/editing of audio in the waveform
 export const saveAudioToIndexedDB = async (audioBlob) => {
     console.log("audioBlob: ", audioBlob);
 
@@ -18,6 +19,7 @@ export const saveAudioToIndexedDB = async (audioBlob) => {
     console.log("Audio saved to IndexedDB with id:", id);
 };
 
+// * Function for accessing the IndexedDB for every logged in user
 export const openDatabase = (userId) => {
     return new Promise((resolve, reject) => {
         const request = window.indexedDB.open(`myDatabase-${userId}`, 2); // include the user ID in the database name
@@ -36,13 +38,13 @@ export const openDatabase = (userId) => {
     });
 };
 
+// *Function for loading the audio saved in the IndexedDB to the waveform in the client side
 export const loadAudioFromIndexedDB = (
     setWaveSurfer,
     setPlaying,
     setRegions,
     sliderRef,
     userId,
-    setIsTranscribing,
     setAudioFile
 ) => {
     // Open the database
@@ -140,7 +142,7 @@ export const loadAudioFromIndexedDB = (
     };
 };
 
-//* RECORDING START BUTTON
+//* RECORDING START FUNCTION
 export const recordStart = (
     stream,
     setIsRecording,
@@ -178,6 +180,7 @@ export const recordStart = (
     console.log("recording start");
 };
 
+//* RECORDING STOP FUNCTION
 export const recordStop = (
     mediaRecorder,
     setIsRecording,
@@ -281,11 +284,12 @@ export const recordStop = (
     console.log("recording stop");
 };
 
-// * IMPORT AUDIO FUNCTION
+// * IMPORT AUDIO BUTTON CLICK FUNCTION
 export const handleLabelClick = (inputRef) => {
     inputRef.current.click();
 };
 
+// * Function for generating random color for the regions created in the waveform
 function getRandomColor() {
     const letters = "0123456789ABCDEF";
     return function () {
@@ -297,6 +301,8 @@ function getRandomColor() {
         return result;
     };
 }
+
+// * IMPORT AUDIO FUNCTION
 export const handleFileChange = (
     event,
     setAudioChunks,
@@ -411,6 +417,7 @@ export const handleFileChange = (
     reader.readAsArrayBuffer(file);
 };
 
+//* TRANSCRIBE AUDIO FUNCTION
 export const transcribeAudio = async (
     audioFile,
     setTranscription,
@@ -633,14 +640,13 @@ export const transcribeAudio = async (
             if (transcriptWordOpen) {
                 wordSpan.removeEventListener("click", handleClick);
             }
-            // remove event listener to prevent further clicks
-            //wordSpan.removeEventListener("click", handleClick);
         });
 
         transcriptDiv.appendChild(wordSpan); // add word element to transcript container
     });
 };
 
+//* REMOVE WAVEFORM FUNCTION
 export const removeWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
     if (waveSurfer) {
         waveSurfer.destroy();
@@ -653,6 +659,7 @@ export const removeWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
     }
 };
 
+//* UNDO FUNCTION
 export const undo = (
     undoActions,
     regions,
@@ -880,6 +887,7 @@ export const undo = (
     }
 };
 
+// * REDO FUNCTION
 export const redo = (redoActions, regions, waveSurfer, undoActions) => {
     if (redoActions.length > 0) {
         const lastAction = redoActions.pop();
@@ -918,6 +926,7 @@ export const redo = (redoActions, regions, waveSurfer, undoActions) => {
     }
 };
 
+// * DELETE REGION IN THE WAVEFORM FUNCTION
 export const handleDeleteRegion = async (
     region,
     currentRegion,
@@ -968,6 +977,7 @@ export const handleDeleteRegion = async (
     setUndoActions([...undoActions, action]);
 };
 
+// * CUT REGION IN THE WAVEFORM FUNCTION
 export const handleCutRegion = async (
     region,
     waveSurfer,
@@ -1066,6 +1076,7 @@ export const handleCutRegion = async (
     setUndoActions([...undoActions, action]);
 };
 
+// * REPLACE REGION IN THE WAVEFORM WITH IMPORTED AUDIO FUNCTION
 export const handleReplaceImportFunction = (
     region,
     waveSurfer,
@@ -1217,6 +1228,7 @@ export const handleReplaceImportFunction = (
     setUndoActions([...undoActions, action]);
 };
 
+// * REPLACE REGION IN THE WAVEFORM WITH RECORDED AUDIO FUNCTION
 export const handleReplaceRecordFunction = (
     region,
     stream,
@@ -1364,7 +1376,7 @@ export const handleReplaceRecordFunction = (
     setUndoActions([...undoActions, action]);
 };
 
-// For Replace Record Function using Transcript
+// * REPLACE REGION IN THE WAVEFORM WITH RECORDED AUDIO THROUGH THE TRANSCRIPT FUNCTION
 export const handleReplaceRecordFunctionUsingTrancript = (
     region,
     stream,
@@ -1525,10 +1537,12 @@ export const handleReplaceRecordFunctionUsingTrancript = (
     setUndoActions([...undoActions, action]);
 };
 
+// * REPLACE REGION IN THE WAVEFORM WITH RECORDED AUDIO STOP FUNCTION
 export const handleReplaceRecordStop = (newMediaRecorder) => {
     newMediaRecorder.stop();
 };
 
+// * Function for converting audio buffer to WAV file type
 export function bufferToWave(abuffer) {
     var numOfChan = abuffer.numberOfChannels,
         length = abuffer.length * numOfChan * 2 + 44,

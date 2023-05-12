@@ -12,7 +12,6 @@ import {
     AiOutlineZoomIn,
     AiOutlineZoomOut,
     AiOutlineClear,
-    AiOutlineStop,
 } from "react-icons/ai";
 
 import { VscDebugRestart } from "react-icons/vsc";
@@ -92,13 +91,12 @@ function SpeechToText() {
 
     const [timestamps, setTimestamps] = useState(null);
 
+    const [transcriptWordOpen, setTranscriptWordOpen] = useState(false);
+
     //* STATES FOR THE BUTTON DISABLING WHEN NOT IN USE
     const [recording, setRecording] = useState(false);
 
     const [audioImported, setAudioImported] = useState(false);
-
-    // *
-    const [transcriptWordOpen, setTranscriptWordOpen] = useState(false);
 
     useEffect(() => {
         const userId = JSON.parse(localStorage.getItem("user")).id;
@@ -199,6 +197,7 @@ function SpeechToText() {
         setAudioImported(true);
     };
 
+    // * DOWNLOAD TRANSCRIPT FUNCTION
     const downloadTranscript = () => {
         if (transcription === null) {
             alert("Transcript is empty!");
@@ -218,6 +217,7 @@ function SpeechToText() {
         element.click();
     };
 
+    // * RESET TRANSCRIPT FUNCTION
     const resetTranscript = () => {
         const transcriptDiv = document.getElementById("transcript");
         transcriptDiv.innerHTML = ""; // Remove all the child elements of transcriptDiv
@@ -225,6 +225,7 @@ function SpeechToText() {
         setTimestamps([]); // Reset the timestamps state to an empty array
     };
 
+    // * START NEW PROJECT FUNCTION
     const resetWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
         removeWaveform(waveSurfer, setWaveSurfer, setRegions);
         resetTranscript();
@@ -249,6 +250,7 @@ function SpeechToText() {
         };
     };
 
+    // * PLAY AUDIO IN THE WAVEFORM FUNCTION
     const handlePlayPause = () => {
         if (waveSurfer) {
             if (playing) {
@@ -260,6 +262,7 @@ function SpeechToText() {
         }
     };
 
+    // * PLAY REGION IN THE WAVEFORM FUNCTION
     const handlePlayRegion = (region) => {
         if (currentRegion) {
             waveSurfer.pause();
@@ -269,6 +272,7 @@ function SpeechToText() {
         setPlaying(true);
     };
 
+    // * RESTART THE AUDIO IN THE WAVEFORM FUNCTION
     const handleRestart = () => {
         waveSurfer.seekTo(0);
         waveSurfer.play();
@@ -276,6 +280,7 @@ function SpeechToText() {
         setPlaying(true);
     };
 
+    // * UNDO FUNCTION
     const undoAction = () => {
         undo(
             undoActions,
@@ -291,10 +296,12 @@ function SpeechToText() {
         }
     };
 
+    // * REDO FUNCTION
     const redoAction = () => {
         redo(redoActions, regions, waveSurfer, undoActions);
     };
 
+    // * DELETE REGION IN THE WAVEFORM FUNCTION
     const deleteRegion = (region) => {
         handleDeleteRegion(
             region,
@@ -306,6 +313,7 @@ function SpeechToText() {
         );
     };
 
+    // * CUT REGION IN THE WAVEFORM FUNCTION
     const cutRegion = (region) => {
         handleCutRegion(
             region,
@@ -318,11 +326,13 @@ function SpeechToText() {
         setUseCut(true);
     };
 
+    // * REPLACE BUTTON CLICK FUNCTION
     const handleReplaceFunction = (region) => {
         setIsReplacing(true);
         setSelectedRegion(region);
     };
 
+    // * REPLACE REGION WITH IMPORTED AUDIO FUNCTION
     const replaceImport = (region) => {
         handleReplaceImportFunction(
             region,
@@ -337,6 +347,7 @@ function SpeechToText() {
         setUseReplace(true);
     };
 
+    // * REPLACE REGION WITH RECORDED AUDIO FUNCTION
     const replaceRecord = (region) => {
         navigator.mediaDevices
             .getUserMedia({ audio: true })
@@ -361,6 +372,7 @@ function SpeechToText() {
             });
     };
 
+    // * DOWNLOAD BUTTON CLICK FUNCTION
     const handleDownload = (waveSurfer) => {
         console.log("wavesurfer download: ", waveSurfer);
         if (waveSurfer) {
@@ -370,6 +382,7 @@ function SpeechToText() {
         }
     };
 
+    // * DOWNLOAD AUDIO IN THE WAVEFORM FUNCTION
     const downloadAudio = (waveSurfer) => {
         // Get the modified audio buffer
         const modifiedBuffer = waveSurfer.backend.buffer;
