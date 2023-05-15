@@ -51,7 +51,7 @@ function Dashboard() {
                                             <div className="flex flex-col items-start space-y-7 pb-6 ">
                                                 <div className="space-y-5">
                                                     <h1 className="text-5xl font-bold ">
-                                                        Hello{" "}
+                                                        Hello,{" "}
                                                         <span className="text-[#2081c3]">
                                                             {firstName}
                                                         </span>
