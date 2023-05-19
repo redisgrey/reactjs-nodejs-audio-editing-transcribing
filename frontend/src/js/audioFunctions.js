@@ -4,6 +4,8 @@ import TimelinePlugin from "wavesurfer.js/dist/plugin/wavesurfer.timeline.min.js
 
 import RegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions.min.js";
 
+import RecordRTC from "recordrtc";
+
 // *Function for automatically saving the audio after recording/importing/editing of audio in the waveform
 export const saveAudioToIndexedDB = async (audioBlob) => {
     console.log("audioBlob: ", audioBlob);
@@ -144,49 +146,35 @@ export const loadAudioFromIndexedDB = (
 };
 
 //* RECORDING START FUNCTION
-export const recordStart = (
-    stream,
-    setIsRecording,
-    mediaRecorder,
-    setAudioChunks,
-    audioChunks,
-    mimeType
-) => {
+export const recordStart = (recorderRef, setIsRecording, mimeType) => {
     setIsRecording(true);
 
-    const media = new MediaRecorder(stream, { type: mimeType });
-
-    console.log("media: ", media);
-
-    mediaRecorder.current = media;
-
-    mediaRecorder.current.start();
-
-    let localAudioChunks = [];
-
-    mediaRecorder.current.ondataavailable = (event) => {
-        if (typeof event.data === "undefined") return;
-
-        if (event.data.size === 0) return;
-
-        localAudioChunks.push(event.data);
-    };
-
-    console.log("localAudioChunks: ", localAudioChunks);
-
-    setAudioChunks(localAudioChunks);
-
-    console.log("audioChunks: ", audioChunks);
+    navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+            const options = {
+                type: "audio",
+                mimeType: mimeType,
+                recorderType: RecordRTC.StereoAudioRecorder,
+                numberOfAudioChannels: 1,
+                desiredSampRate: 48000,
+            };
+            const recorder = RecordRTC(stream, options);
+            recorderRef.current = recorder;
+            recorder.startRecording();
+        })
+        .catch((error) => {
+            console.error("Error accessing media devices:", error);
+        });
 
     console.log("recording start");
 };
 
 //* RECORDING STOP FUNCTION
 export const recordStop = (
-    mediaRecorder,
+    recorderRef,
+    setRecordedBlob,
     setIsRecording,
-    audioChunks,
-    mimeType,
     setWaveSurfer,
     setPlaying,
     sliderRef,
@@ -194,93 +182,94 @@ export const recordStop = (
 ) => {
     setIsRecording(false);
 
-    mediaRecorder.current.stop();
+    const recorder = recorderRef.current;
+    if (recorder) {
+        recorder.stopRecording(() => {
+            const blob = recorder.getBlob();
+            console.log("blob: ", blob);
+            setRecordedBlob(blob);
+            saveAudioToIndexedDB(blob);
 
-    mediaRecorder.current.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: mimeType });
-
-        saveAudioToIndexedDB(audioBlob);
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const arrayBuffer = event.target.result;
-            const audioContext = new AudioContext();
-            audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
-                const audio = {
-                    name: "Recorded Audio",
-                    url: URL.createObjectURL(audioBlob),
-                    buffer: audioBuffer,
-                };
-                // Create a new instance of WaveSurfer
-                const waveSurfer = WaveSurfer.create({
-                    container: "#waveform",
-                    waveColor: "violet",
-                    progressColor: "purple",
-                    plugins: [
-                        TimelinePlugin.create({
-                            container: "#timeline",
-                        }),
-                        RegionsPlugin.create({
-                            regionsMinLength: 1,
-                            dragSelection: {
-                                slop: 5,
-                            },
-                            // Use the color property to set the fill color of the region
-                            color: getRandomColor,
-                        }),
-                    ],
-                });
-
-                // Add event listeners to the WaveSurfer instance
-                waveSurfer.on("region-created", (region) => {
-                    setRegions((prevRegions) => [...prevRegions, region]);
-                    region.update({ color: getRandomColor()() });
-                });
-
-                waveSurfer.on("region-updated", (region) => {
-                    // Stop playback if a region is currently playing
-                    if (waveSurfer.isPlaying()) {
-                        waveSurfer.pause();
-                    }
-                    setRegions((prevRegions) => {
-                        const index = prevRegions.findIndex(
-                            (r) => r.id === region.id
-                        );
-                        if (index === -1) return prevRegions;
-                        const updatedRegions = [...prevRegions];
-                        updatedRegions[index] = region;
-                        return updatedRegions;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const arrayBuffer = event.target.result;
+                const audioContext = new AudioContext();
+                audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
+                    const audio = {
+                        name: "Recorded Audio",
+                        url: URL.createObjectURL(blob),
+                        buffer: audioBuffer,
+                    };
+                    // Create a new instance of WaveSurfer
+                    const waveSurfer = WaveSurfer.create({
+                        container: "#waveform",
+                        waveColor: "violet",
+                        progressColor: "purple",
+                        plugins: [
+                            TimelinePlugin.create({
+                                container: "#timeline",
+                            }),
+                            RegionsPlugin.create({
+                                regionsMinLength: 1,
+                                dragSelection: {
+                                    slop: 5,
+                                },
+                                // Use the color property to set the fill color of the region
+                                color: getRandomColor,
+                            }),
+                        ],
                     });
-                });
 
-                waveSurfer.on("region-removed", (region) => {
-                    setRegions((prevRegions) =>
-                        prevRegions.filter((r) => r.id !== region.id)
-                    );
-                });
+                    // Add event listeners to the WaveSurfer instance
+                    waveSurfer.on("region-created", (region) => {
+                        setRegions((prevRegions) => [...prevRegions, region]);
+                        region.update({ color: getRandomColor()() });
+                    });
 
-                waveSurfer.on("finish", function () {
-                    console.log("finished playing");
+                    waveSurfer.on("region-updated", (region) => {
+                        // Stop playback if a region is currently playing
+                        if (waveSurfer.isPlaying()) {
+                            waveSurfer.pause();
+                        }
+                        setRegions((prevRegions) => {
+                            const index = prevRegions.findIndex(
+                                (r) => r.id === region.id
+                            );
+                            if (index === -1) return prevRegions;
+                            const updatedRegions = [...prevRegions];
+                            updatedRegions[index] = region;
+                            return updatedRegions;
+                        });
+                    });
+
+                    waveSurfer.on("region-removed", (region) => {
+                        setRegions((prevRegions) =>
+                            prevRegions.filter((r) => r.id !== region.id)
+                        );
+                    });
+
+                    waveSurfer.on("finish", function () {
+                        console.log("finished playing");
+                        setPlaying(false);
+                    });
+
+                    sliderRef.current.oninput = function () {
+                        waveSurfer.zoom(Number(this.value));
+                    };
+
+                    // Load the audio buffer into WaveSurfer
+                    waveSurfer.loadDecodedBuffer(audioBuffer);
+
+                    // Set the WaveSurfer instance to state
+                    setWaveSurfer(waveSurfer);
+
+                    // Set initial playing state to false
                     setPlaying(false);
                 });
-
-                sliderRef.current.oninput = function () {
-                    waveSurfer.zoom(Number(this.value));
-                };
-
-                // Load the audio buffer into WaveSurfer
-                waveSurfer.loadDecodedBuffer(audioBuffer);
-
-                // Set the WaveSurfer instance to state
-                setWaveSurfer(waveSurfer);
-
-                // Set initial playing state to false
-                setPlaying(false);
-            });
-        };
-
-        reader.readAsArrayBuffer(audioBlob);
-    };
+            };
+            reader.readAsArrayBuffer(blob);
+        });
+    }
 
     console.log("recording stop");
 };

@@ -36,7 +36,7 @@ import {
 
 import NotFound from "./NotFound";
 
-const mimeType = "audio/mpeg";
+const mimeType = "audio/wav";
 
 function SpeechToText() {
     const { user } = useSelector((state) => state.auth);
@@ -45,6 +45,9 @@ function SpeechToText() {
     const mediaRecorder = useRef(null);
 
     const [isRecording, setIsRecording] = useState(false);
+
+    const recorderRef = useRef(null);
+    const [recordedBlob, setRecordedBlob] = useState(null);
 
     //* STATES FOR THE MEDIARECORDER API
     const [stream, setStream] = useState(null);
@@ -145,35 +148,19 @@ function SpeechToText() {
 
     //* RECORDING START BUTTON
     const startRecording = () => {
-        navigator.mediaDevices
-            .getUserMedia({ audio: true })
-            .then((stream) => {
-                recordStart(
-                    stream,
-                    setIsRecording,
-                    mediaRecorder,
-                    setAudioChunks,
-                    mimeType
-                );
-            })
-            .catch((error) => {
-                console.error("error ", error);
-            });
+        recordStart(recorderRef, setIsRecording, mimeType);
     };
 
     //*  RECORDING STOP BUTTON
     const stopRecording = () => {
         recordStop(
-            mediaRecorder,
+            recorderRef,
+            setRecordedBlob,
             setIsRecording,
-            audioChunks,
-            mimeType,
             setWaveSurfer,
             setPlaying,
             sliderRef,
-            setRegions,
-            setIsTranscribing,
-            setAudioFile
+            setRegions
         );
         setRecording(true);
     };
