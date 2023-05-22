@@ -47,6 +47,7 @@ function SpeechToText() {
     const [isRecording, setIsRecording] = useState(false);
 
     const recorderRef = useRef(null);
+
     const [recordedBlob, setRecordedBlob] = useState(null);
 
     //* STATES FOR THE MEDIARECORDER API
@@ -61,7 +62,7 @@ function SpeechToText() {
 
     const [playing, setPlaying] = useState(false);
 
-    const sliderRef = useRef(null);
+    // const sliderRef = useRef(null);
 
     const [regions, setRegions] = useState([]);
 
@@ -123,7 +124,7 @@ function SpeechToText() {
                             setWaveSurfer,
                             setPlaying,
                             setRegions,
-                            sliderRef,
+                            // sliderRef,
                             userId,
                             setIsTranscribing,
                             setAudioFile
@@ -148,7 +149,16 @@ function SpeechToText() {
 
     //* RECORDING START BUTTON
     const startRecording = () => {
-        recordStart(recorderRef, setIsRecording, mimeType);
+        recordStart(
+            recorderRef,
+            setIsRecording,
+            mimeType,
+            setRegions,
+            setRecordedBlob,
+            setWaveSurfer,
+            setPlaying
+            // sliderRef
+        );
     };
 
     //*  RECORDING STOP BUTTON
@@ -159,8 +169,9 @@ function SpeechToText() {
             setIsRecording,
             setWaveSurfer,
             setPlaying,
-            sliderRef,
-            setRegions
+            // sliderRef,
+            setRegions,
+            setAudioFile
         );
         setRecording(true);
     };
@@ -176,10 +187,9 @@ function SpeechToText() {
             setAudioChunks,
             setWaveSurfer,
             setPlaying,
-            sliderRef,
+            // sliderRef,
             setRegions,
-            setIsTranscribing,
-            setAudioFile
+            setIsTranscribing
         );
         setAudioImported(true);
     };
@@ -444,7 +454,8 @@ function SpeechToText() {
                                 <div className="mt-3" id="waveform"></div>
                                 <div id="timeline"></div>
 
-                                {recording || audioImported ? (
+                                {recording ||
+                                (audioImported && waveSurfer !== null) ? (
                                     <>
                                         {" "}
                                         <div className="flex space-x-4">
@@ -500,7 +511,7 @@ function SpeechToText() {
                                                 <span>Start New Project</span>
                                             </button>
                                         </div>
-                                        <div className="flex space-x-3">
+                                        {/* <div className="flex space-x-3">
                                             <div className="flex space-x-2 mt-2">
                                                 <AiOutlineZoomOut />
 
@@ -516,7 +527,7 @@ function SpeechToText() {
 
                                                 <AiOutlineZoomIn />
                                             </div>
-                                        </div>
+                                        </div> */}
                                         <div className="mt-2 flex justify-center">
                                             <button
                                                 className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"
