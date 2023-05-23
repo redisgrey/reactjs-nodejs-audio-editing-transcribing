@@ -27,7 +27,6 @@ function Header() {
         <>
             <header className="h-[80px] shadow-lg py-2 font-[Poppins] bg-white w-[100%] fixed top-0 z-[100]">
                 <nav>
-                    {/* NAVIGATION IN MID SCREEN ONWARDS */}
                     <div className="hidden justify-between items-center md:flex">
                         <div className="flex justify-around w-[200px]"></div>
                         <div>
@@ -83,7 +82,6 @@ function Header() {
                             </a>
                         </div>
                     ) : (
-                        /* NAVIGATION IN SMALL SCREEN */
                         <div className="flex justify-between items-center md:hidden">
                             <div>
                                 <img
@@ -92,7 +90,6 @@ function Header() {
                                     alt="Logo"
                                 />
                             </div>
-                            {/* HAMBURGER ICON */}
                             <div className="fixed top-2 right-10">
                                 {open === true ? (
                                     <button

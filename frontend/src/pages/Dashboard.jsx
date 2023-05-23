@@ -86,7 +86,6 @@ function Dashboard() {
                                             </div>
                                         </form>
 
-                                        {/* Product grid */}
                                         <div className="lg:col-span-3 ">
                                             {speechToText ? (
                                                 <SpeechToText />

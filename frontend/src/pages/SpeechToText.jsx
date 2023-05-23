@@ -41,7 +41,6 @@ const mimeType = "audio/wav";
 function SpeechToText() {
     const { user } = useSelector((state) => state.auth);
 
-    //* INTIALIZING THE MEDIARECORDER API
     const mediaRecorder = useRef(null);
 
     const [isRecording, setIsRecording] = useState(false);
@@ -50,14 +49,12 @@ function SpeechToText() {
 
     const [recordedBlob, setRecordedBlob] = useState(null);
 
-    //* STATES FOR THE MEDIARECORDER API
     const [stream, setStream] = useState(null);
 
     const [audioChunks, setAudioChunks] = useState([]);
 
     const inputRef = useRef(null);
 
-    //* STATES FOR THE WAVESURFERJS
     const [waveSurfer, setWaveSurfer] = useState(null);
 
     const [playing, setPlaying] = useState(false);
@@ -68,7 +65,6 @@ function SpeechToText() {
 
     const [currentRegion, setCurrentRegion] = useState(null);
 
-    //* STATES FOR THE REPLACING AUDIO PARTS FUNCTION
     const [isReplacing, setIsReplacing] = useState(false);
 
     const [selectedRegion, setSelectedRegion] = useState(null);
@@ -77,7 +73,6 @@ function SpeechToText() {
 
     const [newMediaRecorder, setNewMediaRecorder] = useState(null);
 
-    //* STATES FOR THE UNDO AND REDO FUNCTION
     const [undoActions, setUndoActions] = useState([]);
 
     const [redoActions, setRedoActions] = useState([]);
@@ -86,7 +81,6 @@ function SpeechToText() {
 
     const [useCut, setUseCut] = useState(false);
 
-    //* STATES FOR THE TRANSCRIPTION FUNCTION
     const [isTranscribing, setIsTranscribing] = useState(false);
 
     const [audioFile, setAudioFile] = useState(null);
@@ -97,15 +91,14 @@ function SpeechToText() {
 
     const [transcriptWordOpen, setTranscriptWordOpen] = useState(false);
 
-    //* STATES FOR THE BUTTON DISABLING WHEN NOT IN USE
     const [recording, setRecording] = useState(false);
 
     const [audioImported, setAudioImported] = useState(false);
 
     useEffect(() => {
         const userId = JSON.parse(localStorage.getItem("user")).id;
-        // Check if there is an audio file saved in IndexedDB
-        const request = indexedDB.open(`myDatabase-${userId}`); // include the user
+
+        const request = indexedDB.open(`myDatabase-${userId}`);
 
         request.onsuccess = (event) => {
             const db = event.target.result;
@@ -119,7 +112,6 @@ function SpeechToText() {
                     const audioFile = event.target.result;
 
                     if (audioFile) {
-                        // Load the audio file into WaveSurfer
                         loadAudioFromIndexedDB(
                             setWaveSurfer,
                             setPlaying,
@@ -134,7 +126,6 @@ function SpeechToText() {
                     }
                 };
             } else {
-                // Move on with other functionalities in your website
             }
         };
 
@@ -143,16 +134,13 @@ function SpeechToText() {
                 "An error occurred while opening the database:",
                 event.target.error
             );
-            // Move on with other functionalities in your website
         };
     }, []);
 
-    //* RECORDING START BUTTON
     const startRecording = () => {
         recordStart(recorderRef, setIsRecording, mimeType);
     };
 
-    //*  RECORDING STOP BUTTON
     const stopRecording = () => {
         recordStop(
             recorderRef,
@@ -166,7 +154,6 @@ function SpeechToText() {
         setRecording(true);
     };
 
-    // * IMPORT AUDIO FUNCTION
     const fileLabelClick = () => {
         handleLabelClick(inputRef);
     };
@@ -184,7 +171,6 @@ function SpeechToText() {
         setAudioImported(true);
     };
 
-    // * DOWNLOAD TRANSCRIPT FUNCTION
     const downloadTranscript = () => {
         if (transcription === null) {
             alert("Transcript is empty!");
@@ -200,19 +186,17 @@ function SpeechToText() {
         const filename = `transcript_${dateString}_${timeString}.txt`;
         element.href = URL.createObjectURL(file);
         element.download = filename;
-        document.body.appendChild(element); // Required for this to work in FireFox
+        document.body.appendChild(element);
         element.click();
     };
 
-    // * RESET TRANSCRIPT FUNCTION
     const resetTranscript = () => {
         const transcriptDiv = document.getElementById("transcript");
-        transcriptDiv.innerHTML = ""; // Remove all the child elements of transcriptDiv
-        setTranscription(null); // Reset the transcription state to null
-        setTimestamps([]); // Reset the timestamps state to an empty array
+        transcriptDiv.innerHTML = "";
+        setTranscription(null);
+        setTimestamps([]);
     };
 
-    // * START NEW PROJECT FUNCTION
     const resetWaveform = (waveSurfer, setWaveSurfer, setRegions) => {
         removeWaveform(waveSurfer, setWaveSurfer, setRegions);
         resetTranscript();
@@ -220,8 +204,8 @@ function SpeechToText() {
         setAudioImported(false);
 
         const userId = JSON.parse(localStorage.getItem("user")).id;
-        // Check if there is an audio file saved in IndexedDB
-        const request = indexedDB.open(`myDatabase-${userId}`); // include the user
+
+        const request = indexedDB.open(`myDatabase-${userId}`);
 
         request.onsuccess = (event) => {
             const db = event.target.result;
@@ -237,7 +221,6 @@ function SpeechToText() {
         };
     };
 
-    // * PLAY AUDIO IN THE WAVEFORM FUNCTION
     const handlePlayPause = () => {
         if (waveSurfer) {
             if (playing) {
@@ -249,7 +232,6 @@ function SpeechToText() {
         }
     };
 
-    // * PLAY REGION IN THE WAVEFORM FUNCTION
     const handlePlayRegion = (region) => {
         if (currentRegion) {
             waveSurfer.pause();
@@ -259,7 +241,6 @@ function SpeechToText() {
         setPlaying(true);
     };
 
-    // * RESTART THE AUDIO IN THE WAVEFORM FUNCTION
     const handleRestart = () => {
         waveSurfer.seekTo(0);
         waveSurfer.play();
@@ -267,7 +248,6 @@ function SpeechToText() {
         setPlaying(true);
     };
 
-    // * UNDO FUNCTION
     const undoAction = () => {
         undo(
             undoActions,
@@ -283,12 +263,10 @@ function SpeechToText() {
         }
     };
 
-    // * REDO FUNCTION
     const redoAction = () => {
         redo(redoActions, regions, waveSurfer, undoActions);
     };
 
-    // * DELETE REGION IN THE WAVEFORM FUNCTION
     const deleteRegion = (region) => {
         handleDeleteRegion(
             region,
@@ -300,7 +278,6 @@ function SpeechToText() {
         );
     };
 
-    // * CUT REGION IN THE WAVEFORM FUNCTION
     const cutRegion = (region) => {
         handleCutRegion(
             region,
@@ -313,13 +290,11 @@ function SpeechToText() {
         setUseCut(true);
     };
 
-    // * REPLACE BUTTON CLICK FUNCTION
     const handleReplaceFunction = (region) => {
         setIsReplacing(true);
         setSelectedRegion(region);
     };
 
-    // * REPLACE REGION WITH IMPORTED AUDIO FUNCTION
     const replaceImport = (region) => {
         handleReplaceImportFunction(
             region,
@@ -334,7 +309,6 @@ function SpeechToText() {
         setUseReplace(true);
     };
 
-    // * REPLACE REGION WITH RECORDED AUDIO FUNCTION
     const replaceRecord = (region) => {
         navigator.mediaDevices
             .getUserMedia({ audio: true })
@@ -359,7 +333,6 @@ function SpeechToText() {
             });
     };
 
-    // * DOWNLOAD BUTTON CLICK FUNCTION
     const handleDownload = (waveSurfer) => {
         console.log("wavesurfer download: ", waveSurfer);
         if (waveSurfer) {
@@ -369,19 +342,14 @@ function SpeechToText() {
         }
     };
 
-    // * DOWNLOAD AUDIO IN THE WAVEFORM FUNCTION
     const downloadAudio = (waveSurfer) => {
-        // Get the modified audio buffer
         const modifiedBuffer = waveSurfer.backend.buffer;
 
-        // Create a new blob with the audio data
         const audioBlob = bufferToWave(modifiedBuffer);
 
-        // Create a temporary download link and trigger a click event to download the file
         const audioBlobUrl = URL.createObjectURL(audioBlob);
         const link = document.createElement("a");
 
-        // Add timestamp to the file name
         const timestamp = new Date().toISOString();
         const filename = `modified_audio_${timestamp}.wav`;
 
@@ -389,7 +357,6 @@ function SpeechToText() {
         link.download = filename;
         link.click();
 
-        // Clean up
         URL.revokeObjectURL(audioBlobUrl);
     };
 

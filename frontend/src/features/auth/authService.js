@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Register user
 const register = async (userData) => {
     const response = await axios.post("/api/users/register", userData);
 
@@ -11,7 +10,6 @@ const register = async (userData) => {
     return response.data;
 };
 
-// Login user
 const login = async (userData) => {
     const response = await axios.post("/api/users/login", userData);
 
@@ -22,7 +20,6 @@ const login = async (userData) => {
     return response.data;
 };
 
-// Logout User
 const logout = async () => {
     const response = await axios.post("/api/users/logout");
 

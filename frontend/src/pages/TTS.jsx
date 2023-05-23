@@ -13,7 +13,6 @@ function TTS() {
 
     const [value, setValue] = useState("");
 
-    // * GENERATE AUDIO AND DOWNLOAD THE AUDIO FUNCTION
     const generateAndDownloadAudio = (text) => {
         const endpoint = `/api/text-to-speech?text=${value}`;
         fetch(endpoint)
@@ -37,7 +36,6 @@ function TTS() {
             });
     };
 
-    // * DOWNLOAD AUDIO FUNCTION
     const download = (url) => {
         const link = document.createElement("a");
         link.href = url;

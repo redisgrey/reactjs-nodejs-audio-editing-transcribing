@@ -74,7 +74,6 @@ function Register() {
                 .then((response) => {
                     console.log("response: ", response);
                     if (response && response.data) {
-                        // handle successful registration
                         console.log(response.data);
                     } else {
                         console.error("Response or data is undefined");
@@ -82,7 +81,7 @@ function Register() {
                 })
                 .catch((error) => {
                     console.log("error: ", error);
-                    setError(error); // Set error state with the error message
+                    setError(error);
                     setTimeout(() => {
                         setError(null);
                     }, 5000);

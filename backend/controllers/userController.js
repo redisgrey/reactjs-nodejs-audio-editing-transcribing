@@ -4,9 +4,6 @@ const jwt = require("jsonwebtoken");
 
 const bcrypt = require("bcrypt");
 
-// @desc    Register New User
-// @route   POST /api/users/register
-// @access  Public
 const registerUser = async (req, res) => {
     try {
         let { fullName, emailAddress, password } = req.body;
@@ -16,7 +13,6 @@ const registerUser = async (req, res) => {
             throw new Error("Please add all fields");
         }
 
-        // Check email address pattern
         let emailFormat = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*\.com$/;
 
         if (!emailAddress.match(emailFormat)) {
@@ -27,12 +23,10 @@ const registerUser = async (req, res) => {
             };
         }
 
-        //Check password pattern
         let passwordFormat =
             /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$/;
 
         if (password.match(passwordFormat)) {
-            // Hash the password
             const salt = await bcrypt.genSalt(10);
             var hashedPassword = await bcrypt.hash(password, salt);
         } else {
@@ -42,7 +36,6 @@ const registerUser = async (req, res) => {
             );
         }
 
-        // Check if user exists
         const userExists = await User.findOne({ emailAddress });
 
         if (userExists) {
@@ -53,7 +46,6 @@ const registerUser = async (req, res) => {
             };
         }
 
-        // Create User
         const user = await User.create({
             fullName,
             emailAddress,
@@ -78,11 +70,6 @@ const registerUser = async (req, res) => {
     }
 };
 
-// @desc    Login user
-// @route   POST /api/users/login
-// @access  Public
-// * email address
-// * password
 const loginUser = async (req, res) => {
     try {
         const { emailAddress, password } = req.body;
@@ -116,9 +103,6 @@ const loginUser = async (req, res) => {
     }
 };
 
-// @desc    Logout User
-// @route   POST /api/users/logout
-// @access  Private
 const logoutUser = async (req, res) => {
     let token;
 
@@ -127,10 +111,8 @@ const logoutUser = async (req, res) => {
         req.headers.authorization.startsWith("Bearer")
     ) {
         try {
-            // Get token from header
             token = req.headers.authorization.split(" ")[1];
 
-            // verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             if (decoded) {
@@ -146,7 +128,6 @@ const logoutUser = async (req, res) => {
     }
 };
 
-// Generate JWT
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
