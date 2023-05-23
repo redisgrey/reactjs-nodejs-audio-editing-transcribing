@@ -157,7 +157,7 @@ function SpeechToText() {
             setRecordedBlob,
             setWaveSurfer,
             setPlaying
-            // sliderRef
+            // setAudioFile
         );
     };
 
@@ -169,9 +169,8 @@ function SpeechToText() {
             setIsRecording,
             setWaveSurfer,
             setPlaying,
-            // sliderRef,
-            setRegions,
-            setAudioFile
+            setRegions
+            // setAudioFile
         );
         setRecording(true);
     };

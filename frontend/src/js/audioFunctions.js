@@ -145,6 +145,8 @@ export const loadAudioFromIndexedDB = (
     };
 };
 
+let recordingTimeout;
+
 //* RECORDING START FUNCTION
 export const recordStart = (
     recorderRef,
@@ -154,7 +156,7 @@ export const recordStart = (
     setRecordedBlob,
     setWaveSurfer,
     setPlaying
-    // sliderRef
+    // setAudioFile
 ) => {
     setIsRecording(true);
 
@@ -166,12 +168,12 @@ export const recordStart = (
             setIsRecording,
             setWaveSurfer,
             setPlaying,
-            // sliderRef,
             setRegions
+            // setAudioFile
         );
     };
 
-    const recordingTimeout = setTimeout(stopRecording, 59000); // Stop recording after 60 seconds
+    recordingTimeout = setTimeout(stopRecording, 59000);
 
     navigator.mediaDevices
         .getUserMedia({ audio: true })
@@ -189,7 +191,7 @@ export const recordStart = (
         })
         .catch((error) => {
             console.error("Error accessing media devices:", error);
-            clearTimeout(recordingTimeout); // Clear the timeout if there was an error
+            clearTimeout(recordingTimeout);
         });
 
     console.log("Recording started");
@@ -202,9 +204,8 @@ export const recordStop = (
     setIsRecording,
     setWaveSurfer,
     setPlaying,
-    // sliderRef,
-    setRegions,
-    setAudioFile
+    setRegions
+    // setAudioFile
 ) => {
     setIsRecording(false);
 
@@ -212,11 +213,12 @@ export const recordStop = (
 
     if (recorder) {
         recorder.stopRecording(() => {
+            clearTimeout(recordingTimeout);
             const blob = recorder.getBlob();
             console.log("blob: ", blob);
             setRecordedBlob(blob);
             saveAudioToIndexedDB(blob);
-            setAudioFile(blob);
+            // setAudioFile(blob);
 
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -280,10 +282,6 @@ export const recordStop = (
                         console.log("finished playing");
                         setPlaying(false);
                     });
-
-                    // sliderRef.current.oninput = function () {
-                    //     waveSurfer.zoom(Number(this.value));
-                    // };
 
                     // Load the audio buffer into WaveSurfer
                     waveSurfer.loadDecodedBuffer(audioBuffer);
@@ -355,7 +353,6 @@ export const handleFileChange = (
                 });
                 setAudioChunks([audioBlob]);
                 console.log("audioBlob import: ", audioBlob);
-                saveAudioToIndexedDB(audioBlob);
 
                 const arrayBuffer = event.target.result;
                 const audioContext = new AudioContext();
@@ -428,6 +425,9 @@ export const handleFileChange = (
                     console.log("audioBuffer: ", audioBuffer);
                     // Load the audio buffer into WaveSurfer
                     waveSurfer.loadDecodedBuffer(audioBuffer);
+                    const audioBlob = bufferToWave(audioBuffer);
+
+                    saveAudioToIndexedDB(audioBlob);
 
                     // Set the WaveSurfer instance to state
                     setWaveSurfer(waveSurfer);
@@ -1068,6 +1068,10 @@ export const handleCutRegion = async (
 
     setAudioFile(audioBlob);
 
+    if (audioBlob) {
+        alert("Cut Region Successful!");
+    }
+
     // Store previous background color of corresponding word
     const word = document.querySelector(`[data-region-id="${region.id}"]`);
     const wordContent = word ? word.textContent.split(" ", 1) : "";
@@ -1196,6 +1200,10 @@ export const handleReplaceImportFunction = (
                     saveAudioToIndexedDB(audioBlob);
 
                     setAudioFile(audioBlob);
+
+                    if (audioBlob) {
+                        alert("Replace Region Successful!");
+                    }
 
                     // Remove the replaced region from the list and the waveform
                     const index = regions.findIndex(
@@ -1346,6 +1354,10 @@ export const handleReplaceRecordFunction = (
 
             setAudioFile(audioBlob);
 
+            if (audioBlob) {
+                alert("Replace Region Successful!");
+            }
+
             // Remove the replaced region from the list and the waveform
             const index = regions.findIndex((reg) => reg.id === region.id);
             regions.splice(index, 1);
@@ -1479,6 +1491,10 @@ export const handleReplaceRecordFunctionUsingTrancript = (
             saveAudioToIndexedDB(audioBlob);
 
             setAudioFile(audioBlob);
+
+            if (audioBlob) {
+                alert("Replace Region Successful!");
+            }
 
             // Remove the replaced region from the list and the waveform
             const index = regions.findIndex((reg) => reg.id === region.id);
