@@ -62,7 +62,7 @@ function SpeechToText() {
 
     const [playing, setPlaying] = useState(false);
 
-    // const sliderRef = useRef(null);
+    const sliderRef = useRef(null);
 
     const [regions, setRegions] = useState([]);
 
@@ -124,7 +124,7 @@ function SpeechToText() {
                             setWaveSurfer,
                             setPlaying,
                             setRegions,
-                            // sliderRef,
+                            sliderRef,
                             userId,
                             setIsTranscribing,
                             setAudioFile
@@ -149,16 +149,7 @@ function SpeechToText() {
 
     //* RECORDING START BUTTON
     const startRecording = () => {
-        recordStart(
-            recorderRef,
-            setIsRecording,
-            mimeType,
-            setRegions,
-            setRecordedBlob,
-            setWaveSurfer,
-            setPlaying
-            // setAudioFile
-        );
+        recordStart(recorderRef, setIsRecording, mimeType);
     };
 
     //*  RECORDING STOP BUTTON
@@ -169,8 +160,8 @@ function SpeechToText() {
             setIsRecording,
             setWaveSurfer,
             setPlaying,
-            setRegions
-            // setAudioFile
+            setRegions,
+            setAudioFile
         );
         setRecording(true);
     };
@@ -186,7 +177,7 @@ function SpeechToText() {
             setAudioChunks,
             setWaveSurfer,
             setPlaying,
-            // sliderRef,
+            sliderRef,
             setRegions,
             setIsTranscribing
         );
@@ -510,7 +501,7 @@ function SpeechToText() {
                                                 <span>Start New Project</span>
                                             </button>
                                         </div>
-                                        {/* <div className="flex space-x-3">
+                                        <div className="flex space-x-3">
                                             <div className="flex space-x-2 mt-2">
                                                 <AiOutlineZoomOut />
 
@@ -526,7 +517,7 @@ function SpeechToText() {
 
                                                 <AiOutlineZoomIn />
                                             </div>
-                                        </div> */}
+                                        </div>
                                         <div className="mt-2 flex justify-center">
                                             <button
                                                 className="btn  bg-[#E09F3e] hover:bg-[#e09f3e83] focus:bg-[#E09F3e] w-50 me-4 space-x-2 flex justify-center items-center"

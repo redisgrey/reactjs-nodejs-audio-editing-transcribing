@@ -45,7 +45,7 @@ export const loadAudioFromIndexedDB = (
     setWaveSurfer,
     setPlaying,
     setRegions,
-    // sliderRef,
+    sliderRef,
     userId,
     setIsTranscribing,
     setAudioFile
@@ -125,9 +125,9 @@ export const loadAudioFromIndexedDB = (
                 setPlaying(false);
             });
 
-            // sliderRef.current.oninput = function () {
-            //     waveSurfer.zoom(Number(this.value));
-            // };
+            sliderRef.current.oninput = function () {
+                waveSurfer.zoom(Number(this.value));
+            };
 
             // Load the audio buffer into WaveSurfer
             waveSurfer.loadBlob(audioFile);
@@ -148,32 +148,8 @@ export const loadAudioFromIndexedDB = (
 let recordingTimeout;
 
 //* RECORDING START FUNCTION
-export const recordStart = (
-    recorderRef,
-    setIsRecording,
-    mimeType,
-    setRegions,
-    setRecordedBlob,
-    setWaveSurfer,
-    setPlaying
-    // setAudioFile
-) => {
+export const recordStart = (recorderRef, setIsRecording, mimeType) => {
     setIsRecording(true);
-
-    const stopRecording = () => {
-        alert("Recording stopped automatically after 60 seconds");
-        recordStop(
-            recorderRef,
-            setRecordedBlob,
-            setIsRecording,
-            setWaveSurfer,
-            setPlaying,
-            setRegions
-            // setAudioFile
-        );
-    };
-
-    recordingTimeout = setTimeout(stopRecording, 59000);
 
     navigator.mediaDevices
         .getUserMedia({ audio: true })
@@ -191,7 +167,6 @@ export const recordStart = (
         })
         .catch((error) => {
             console.error("Error accessing media devices:", error);
-            clearTimeout(recordingTimeout);
         });
 
     console.log("Recording started");
@@ -204,8 +179,8 @@ export const recordStop = (
     setIsRecording,
     setWaveSurfer,
     setPlaying,
-    setRegions
-    // setAudioFile
+    setRegions,
+    setAudioFile
 ) => {
     setIsRecording(false);
 
@@ -213,12 +188,11 @@ export const recordStop = (
 
     if (recorder) {
         recorder.stopRecording(() => {
-            clearTimeout(recordingTimeout);
             const blob = recorder.getBlob();
             console.log("blob: ", blob);
             setRecordedBlob(blob);
             saveAudioToIndexedDB(blob);
-            // setAudioFile(blob);
+            setAudioFile(blob);
 
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -324,7 +298,7 @@ export const handleFileChange = (
     setAudioChunks,
     setWaveSurfer,
     setPlaying,
-    // sliderRef,
+    sliderRef,
     setRegions
 ) => {
     const file = event.target.files[0];
@@ -418,9 +392,9 @@ export const handleFileChange = (
                         setPlaying(false);
                     });
 
-                    // sliderRef.current.oninput = function () {
-                    //     waveSurfer.zoom(Number(this.value));
-                    // };
+                    sliderRef.current.oninput = function () {
+                        waveSurfer.zoom(Number(this.value));
+                    };
 
                     console.log("audioBuffer: ", audioBuffer);
                     // Load the audio buffer into WaveSurfer
@@ -467,207 +441,224 @@ export const transcribeAudio = async (
     setTranscription(null); // Reset the transcription state to null
     setTimestamps([]); // Reset the timestamps state to an empty array
 
-    setIsTranscribing(true);
-    // Create a FormData object with the audio file
-    const formData = new FormData();
+    // Create an audio element to calculate the duration
+    const audio = document.createElement("audio");
+    audio.src = URL.createObjectURL(audioFile);
 
-    console.log("transcribe audioFile: ", audioFile);
-    formData.append("audio", audioFile);
+    audio.addEventListener("loadedmetadata", async () => {
+        const duration = audio.duration;
+        URL.revokeObjectURL(audio.src); // Clean up the object URL
+        if (duration > 60) {
+            alert(
+                "You can only transcribe an audio less than 60 seconds. Edit your audio and try again. Thank you!"
+            );
+            return;
+        } else {
+            setIsTranscribing(true);
+            // Create a FormData object with the audio file
+            const formData = new FormData();
 
-    // Send a POST request to the /transcribe endpoint on the backend
-    const response = await fetch("/api/speech-to-text", {
-        method: "POST",
-        body: formData,
-    });
+            console.log("transcribe audioFile: ", audioFile);
+            formData.append("audio", audioFile);
 
-    // Get the result as JSON
-    const result = await response.json();
-    console.log("result: ", result);
-
-    // Set the transcription and timestamps in the state
-    setTranscription(result.transcription);
-    setTimestamps(result.timestamps);
-    setIsTranscribing(false);
-    const transcriptDiv = document.getElementById("transcript");
-    const words = result.transcription.split(" "); // split the transcription into words
-
-    let openRegionId = null; // Track the ID of the currently open word
-
-    words.forEach((word, index) => {
-        const wordSpan = document.createElement("span");
-        wordSpan.textContent = word + " "; // add space after each word to separate them
-
-        // set data attribute with region id
-        const regionId = `region-${index}`;
-        wordSpan.setAttribute("data-region-id", regionId);
-
-        // set up event listener to trigger corresponding region
-
-        wordSpan.addEventListener("click", function handleClick() {
-            setTranscriptWordOpen(true);
-
-            let start = result.timestamps[index].start;
-            let end = result.timestamps[index].end;
-            if (end - start !== 1) {
-                end = start + 1;
-            }
-            // trigger region with start and end timestamps
-            console.log("start: ", start);
-            console.log("end: ", end);
-
-            if (openRegionId !== null) {
-                // Close the previously open word
-                const previousRegion = waveSurfer.regions.list[openRegionId];
-                if (previousRegion) {
-                    handleDeleteRegion(
-                        previousRegion,
-                        currentRegion,
-                        waveSurfer,
-                        setCurrentRegion,
-                        setUndoActions,
-                        undoActions
-                    );
-                }
-            }
-
-            openRegionId = regionId; // Update the openRegionId with the new word's region ID
-
-            const region = waveSurfer.addRegion({
-                start: start,
-                end: end,
-                color: "rgba(255, 0, 0, 0.3)",
-                id: regionId,
+            // Send a POST request to the /transcribe endpoint on the backend
+            const response = await fetch("/api/speech-to-text", {
+                method: "POST",
+                body: formData,
             });
 
-            waveSurfer.on("region-updated", (region) => {
-                const newEnd = region.end;
-                setTimestamps((timestamps) => {
-                    const newTimestamps = [...timestamps];
-                    newTimestamps[index].end = newEnd;
-                    return newTimestamps;
-                });
-                console.log("newEnd: ", newEnd);
+            // Get the result as JSON
+            const result = await response.json();
+            console.log("result: ", result);
 
-                const newStart = region.start;
-                setTimestamps((timestamps) => {
-                    const newTimestamps = [...timestamps];
-                    newTimestamps[index].start = newStart;
-                    return newTimestamps;
-                });
-                console.log("newStart: ", newStart);
-            });
+            // Set the transcription and timestamps in the state
+            setTranscription(result.transcription);
+            setTimestamps(result.timestamps);
+            setIsTranscribing(false);
+            const transcriptDiv = document.getElementById("transcript");
+            const words = result.transcription.split(" "); // split the transcription into words
 
-            // style the clicked word with a background color
-            wordSpan.style.backgroundColor = region.color;
+            let openRegionId = null; // Track the ID of the currently open word
 
-            // add edit button to word span
-            const editButton = document.createElement("button");
-            editButton.textContent = "Edit";
-            editButton.classList.add("edit-button");
-            editButton.addEventListener("click", (event) => {
-                event.stopPropagation(); // prevent click event from triggering word click event
-                const currentWord = wordSpan.textContent.split(" ", 1);
-                const input = document.createElement("input");
-                input.type = "text";
-                input.value = currentWord;
-                input.addEventListener("blur", () => {
-                    const editedWord = input.value.trim();
-                    if (editedWord !== currentWord) {
-                        const newTranscription = result.transcription.replace(
-                            currentWord,
-                            editedWord
-                        );
-                        setTranscription(newTranscription);
-                        wordSpan.textContent = editedWord + " ";
-                        wordSpan.appendChild(editButton);
-                        wordSpan.appendChild(replaceButton);
-                        wordSpan.appendChild(deleteButton);
-                        wordSpan.appendChild(closeButton);
+            words.forEach((word, index) => {
+                const wordSpan = document.createElement("span");
+                wordSpan.textContent = word + " "; // add space after each word to separate them
+
+                // set data attribute with region id
+                const regionId = `region-${index}`;
+                wordSpan.setAttribute("data-region-id", regionId);
+
+                // set up event listener to trigger corresponding region
+
+                wordSpan.addEventListener("click", function handleClick() {
+                    setTranscriptWordOpen(true);
+
+                    let start = result.timestamps[index].start;
+                    let end = result.timestamps[index].end;
+                    if (end - start !== 1) {
+                        end = start + 1;
                     }
-                    transcriptDiv.replaceChild(wordSpan, input);
-                });
-                transcriptDiv.replaceChild(input, wordSpan);
-            });
-            wordSpan.appendChild(editButton);
+                    // trigger region with start and end timestamps
+                    console.log("start: ", start);
+                    console.log("end: ", end);
 
-            // add replace button to word span
-            const replaceButton = document.createElement("button");
-            replaceButton.textContent = "Replace";
-            replaceButton.classList.add("replace-button");
-            replaceButton.addEventListener("click", (event) => {
-                event.stopPropagation(); // prevent click event from triggering word click event
-                const region = waveSurfer.regions.list[regionId];
-                if (region) {
-                    navigator.mediaDevices
-                        .getUserMedia({ audio: true })
-                        .then((stream) => {
-                            handleReplaceRecordFunctionUsingTrancript(
-                                region,
-                                stream,
+                    if (openRegionId !== null) {
+                        // Close the previously open word
+                        const previousRegion =
+                            waveSurfer.regions.list[openRegionId];
+                        if (previousRegion) {
+                            handleDeleteRegion(
+                                previousRegion,
+                                currentRegion,
                                 waveSurfer,
-                                setIsReplaceRecording,
+                                setCurrentRegion,
+                                setUndoActions,
+                                undoActions
+                            );
+                        }
+                    }
+
+                    openRegionId = regionId; // Update the openRegionId with the new word's region ID
+
+                    const region = waveSurfer.addRegion({
+                        start: start,
+                        end: end,
+                        color: "rgba(255, 0, 0, 0.3)",
+                        id: regionId,
+                    });
+
+                    waveSurfer.on("region-updated", (region) => {
+                        const newEnd = region.end;
+                        setTimestamps((timestamps) => {
+                            const newTimestamps = [...timestamps];
+                            newTimestamps[index].end = newEnd;
+                            return newTimestamps;
+                        });
+                        console.log("newEnd: ", newEnd);
+
+                        const newStart = region.start;
+                        setTimestamps((timestamps) => {
+                            const newTimestamps = [...timestamps];
+                            newTimestamps[index].start = newStart;
+                            return newTimestamps;
+                        });
+                        console.log("newStart: ", newStart);
+                    });
+
+                    // style the clicked word with a background color
+                    wordSpan.style.backgroundColor = region.color;
+
+                    // add edit button to word span
+                    const editButton = document.createElement("button");
+                    editButton.textContent = "Edit";
+                    editButton.classList.add("edit-button");
+                    editButton.addEventListener("click", (event) => {
+                        event.stopPropagation(); // prevent click event from triggering word click event
+                        const currentWord = wordSpan.textContent.split(" ", 1);
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.value = currentWord;
+                        input.addEventListener("blur", () => {
+                            const editedWord = input.value.trim();
+                            if (editedWord !== currentWord) {
+                                const newTranscription =
+                                    result.transcription.replace(
+                                        currentWord,
+                                        editedWord
+                                    );
+                                setTranscription(newTranscription);
+                                wordSpan.textContent = editedWord + " ";
+                                wordSpan.appendChild(editButton);
+                                wordSpan.appendChild(replaceButton);
+                                wordSpan.appendChild(deleteButton);
+                                wordSpan.appendChild(closeButton);
+                            }
+                            transcriptDiv.replaceChild(wordSpan, input);
+                        });
+                        transcriptDiv.replaceChild(input, wordSpan);
+                    });
+                    wordSpan.appendChild(editButton);
+
+                    // add replace button to word span
+                    const replaceButton = document.createElement("button");
+                    replaceButton.textContent = "Replace";
+                    replaceButton.classList.add("replace-button");
+                    replaceButton.addEventListener("click", (event) => {
+                        event.stopPropagation(); // prevent click event from triggering word click event
+                        const region = waveSurfer.regions.list[regionId];
+                        if (region) {
+                            navigator.mediaDevices
+                                .getUserMedia({ audio: true })
+                                .then((stream) => {
+                                    handleReplaceRecordFunctionUsingTrancript(
+                                        region,
+                                        stream,
+                                        waveSurfer,
+                                        setIsReplaceRecording,
+                                        regions,
+                                        setIsReplacing,
+                                        setRedoActions,
+                                        setNewMediaRecorder,
+                                        setUndoActions,
+                                        undoActions,
+                                        setAudioFile
+                                    );
+                                })
+                                .catch((error) => {
+                                    console.error("error ", error);
+                                });
+                        }
+                    });
+                    wordSpan.appendChild(replaceButton);
+
+                    // add delete button to word span
+                    const deleteButton = document.createElement("button");
+                    deleteButton.textContent = "Cut";
+                    deleteButton.classList.add("delete-button");
+                    deleteButton.addEventListener("click", (event) => {
+                        event.stopPropagation(); // prevent click event from triggering word click event
+                        const region = waveSurfer.regions.list[regionId];
+                        if (region) {
+                            handleCutRegion(
+                                region,
+                                waveSurfer,
                                 regions,
-                                setIsReplacing,
-                                setRedoActions,
-                                setNewMediaRecorder,
                                 setUndoActions,
                                 undoActions,
                                 setAudioFile
                             );
-                        })
-                        .catch((error) => {
-                            console.error("error ", error);
-                        });
-                }
+                        }
+                    });
+                    wordSpan.appendChild(deleteButton);
+
+                    // add close button to word span
+                    const closeButton = document.createElement("button");
+                    closeButton.textContent = "Close";
+                    closeButton.classList.add("close-button");
+                    closeButton.addEventListener("click", (event) => {
+                        event.stopPropagation(); // prevent click event from triggering word click event
+                        const region = waveSurfer.regions.list[regionId];
+                        if (region) {
+                            handleDeleteRegion(
+                                region,
+                                currentRegion,
+                                waveSurfer,
+                                setCurrentRegion,
+                                setUndoActions,
+                                undoActions
+                            );
+                        }
+                    });
+                    wordSpan.appendChild(closeButton);
+
+                    if (transcriptWordOpen) {
+                        wordSpan.removeEventListener("click", handleClick);
+                    }
+                });
+
+                transcriptDiv.appendChild(wordSpan); // add word element to transcript container
             });
-            wordSpan.appendChild(replaceButton);
-
-            // add delete button to word span
-            const deleteButton = document.createElement("button");
-            deleteButton.textContent = "Cut";
-            deleteButton.classList.add("delete-button");
-            deleteButton.addEventListener("click", (event) => {
-                event.stopPropagation(); // prevent click event from triggering word click event
-                const region = waveSurfer.regions.list[regionId];
-                if (region) {
-                    handleCutRegion(
-                        region,
-                        waveSurfer,
-                        regions,
-                        setUndoActions,
-                        undoActions,
-                        setAudioFile
-                    );
-                }
-            });
-            wordSpan.appendChild(deleteButton);
-
-            // add close button to word span
-            const closeButton = document.createElement("button");
-            closeButton.textContent = "Close";
-            closeButton.classList.add("close-button");
-            closeButton.addEventListener("click", (event) => {
-                event.stopPropagation(); // prevent click event from triggering word click event
-                const region = waveSurfer.regions.list[regionId];
-                if (region) {
-                    handleDeleteRegion(
-                        region,
-                        currentRegion,
-                        waveSurfer,
-                        setCurrentRegion,
-                        setUndoActions,
-                        undoActions
-                    );
-                }
-            });
-            wordSpan.appendChild(closeButton);
-
-            if (transcriptWordOpen) {
-                wordSpan.removeEventListener("click", handleClick);
-            }
-        });
-
-        transcriptDiv.appendChild(wordSpan); // add word element to transcript container
+        }
     });
 };
 
