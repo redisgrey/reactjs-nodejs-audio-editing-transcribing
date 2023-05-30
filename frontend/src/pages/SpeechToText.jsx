@@ -164,7 +164,6 @@ function SpeechToText() {
             setAudioChunks,
             setWaveSurfer,
             setPlaying,
-            sliderRef,
             setRegions,
             setIsTranscribing
         );

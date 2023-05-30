@@ -253,7 +253,6 @@ export const handleFileChange = (
     setAudioChunks,
     setWaveSurfer,
     setPlaying,
-    sliderRef,
     setRegions
 ) => {
     const file = event.target.files[0];
@@ -336,10 +335,6 @@ export const handleFileChange = (
                     waveSurfer.on("finish", function () {
                         setPlaying(false);
                     });
-
-                    sliderRef.current.oninput = function () {
-                        waveSurfer.zoom(Number(this.value));
-                    };
 
                     waveSurfer.loadDecodedBuffer(audioBuffer);
                     const audioBlob = bufferToWave(audioBuffer);
